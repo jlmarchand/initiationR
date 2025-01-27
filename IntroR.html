@@ -296,24 +296,20 @@ library(tidyverse)
 
 ---
 
-## Début de discussion
-
-- boîte à outils standard
-- lisibilité du code (/base)
-- prise en main plus naturelle ? (format par défaut dans RStudio)
-- comme toujours : coût d'entrée
-- plus orienté utilisateur que performance (/data.table)
-
-Présentation de tidyverse essentiellement basée sur une lecture du tutoriel suivant
-
-https://juba.github.io/tidyverse/
-
----
-
----
 
 ## Les fonctions dplyr : rename
 - changement des noms de variable assez simple
+
+```r
+Manchots &lt;- rename(
+  Manchots,
+  bill_l = bill_length_mm,
+  bill_d = bill_depth_mm,
+  flip_l = flipper_length_mm,
+  mass = body_mass_g
+)
+glimpse(Manchots)
+```
 
 ```
 ## Rows: 344
@@ -334,9 +330,17 @@ https://juba.github.io/tidyverse/
 ## Les fonctions dplyr : slice
 - sélection de lignes/individus par leur position dans le tableau
 
+```r
+slice(Manchots, 123)
+```
+
 ```
 ##   species    island bill_l bill_d flip_l mass    sex year
 ## 1  Adelie Torgersen   40.2     17    176 3450 female 2009
+```
+
+```r
+slice(Manchots, 3:6)
 ```
 
 ```
@@ -356,12 +360,24 @@ https://juba.github.io/tidyverse/
   + `|` pour "ou", la réponse est `TRUE` si au moins une des conditions sont satisfaites
   + `!` pour "non", la réponse est `TRUE` si la condition est fausse
 
+```r
+(1 &gt; 2)&amp;(1 &lt; 2)
+```
+
 ```
 ## [1] FALSE
 ```
 
+```r
+(1 &gt; 2)|(1 &lt; 2)
+```
+
 ```
 ## [1] TRUE
+```
+
+```r
+!(1 &gt; 2)
 ```
 
 ```
@@ -370,6 +386,10 @@ https://juba.github.io/tidyverse/
 ]
 .pull-right[
 - sélection de lignes/individus par condition(s) sur les valeurs des variables
+
+```r
+filter(Manchots, (species != "Adelie") &amp; (bill_l &gt;= 39))
+```
 
 ```
 ##       species island bill_l bill_d flip_l mass    sex year
@@ -573,6 +593,10 @@ https://juba.github.io/tidyverse/
 
 .pull-left[
 - sélection de colonnes/variables par nom ou condition
+
+```r
+select(Manchots, species, bill_l)
+```
 
 ```
 ##       species bill_l
@@ -925,11 +949,21 @@ https://juba.github.io/tidyverse/
 .pull-right[
 - pour sélectionner plusieurs variables 
 
+```r
+select(Manchots, species:bill_l)
+select(Manchots, starts_with("bill")) 
+select(Manchots, ends_with("_l")) ## aussi contains() et matches()
+select_if(Manchots, is.numeric) ## par booléen
+```
 ]
 ---
 
 ## Les fonctions dplyr : arrange
 - tri des observations suivant les valeurs des variables
+
+```r
+arrange(Manchots,bill_d, desc(bill_l))
+```
 
 ```
 ##       species    island bill_l bill_d flip_l mass    sex year
@@ -1283,6 +1317,12 @@ https://juba.github.io/tidyverse/
 
 ## Les fonctions dplyr : mutate
 - création d'une nouvelle variable qui remplace une existante ou qui vient s'ajouter au tableau
+
+```r
+mutate(Manchots,
+       bill_length_cm = bill_l / 10,
+       Bill_length_cm = bill_l / 10)
+```
 
 ```
 ##       species    island bill_l bill_d flip_l mass    sex year bill_length_cm
@@ -1985,6 +2025,13 @@ https://juba.github.io/tidyverse/
 .pull-left[
 
 
+```r
+slice(arrange(select_if (
+  filter (Manchots,  island == "Biscoe"),
+  is.numeric
+), mass) , 1:3)
+```
+
 ```
 ##   bill_l bill_d flip_l mass year
 ## 1   36.5   16.6    181 2850 2008
@@ -1994,17 +2041,33 @@ https://juba.github.io/tidyverse/
 ]
 .pull-right[
 
+```r
+Manchots %&gt;% filter( island == "Biscoe" ) %&gt;% 
+             select_if ( is.numeric ) %&gt;% 
+             arrange( mass ) %&gt;% 
+             slice(1:3)
+```
+
 ```
 ##   bill_l bill_d flip_l mass year
 ## 1   36.5   16.6    181 2850 2008
 ## 2   36.4   17.1    184 2850 2008
 ## 3   34.5   18.1    187 2900 2008
 ```
+
+```r
+# succession des opérations limpide, pas de mélange avec les options des fonctions
+```
 ]
 ---
 
 ## Les fonctions dplyr : group_by
 - regroupement des indvidus 
+
+```r
+Manchots %&gt;% group_by(island) %&gt;% 
+             slice(1:2)
+```
 
 ```
 ## # A tibble: 6 × 8
@@ -2024,6 +2087,13 @@ https://juba.github.io/tidyverse/
 ## Les fonctions dplyr : summarise
 - descriptions des données par sous-groupes
 
+```r
+Manchots %&gt;% group_by(island) %&gt;% 
+             summarise(long_moy = mean(bill_l, na.rm=T),
+                       long_max = max(bill_l, na.rm = T),
+                       nb = n())
+```
+
 ```
 ## # A tibble: 3 × 4
 ##   island    long_moy long_max    nb
@@ -2038,6 +2108,11 @@ https://juba.github.io/tidyverse/
 ## Les fonctions dplyr : count
 - autre façon de compter
 
+```r
+Manchots %&gt;% count(island, species) %&gt;%
+             arrange(desc(n))
+```
+
 ```
 ##      island   species   n
 ## 1    Biscoe    Gentoo 124
@@ -2048,12 +2123,23 @@ https://juba.github.io/tidyverse/
 ```
 - cela revient quasiment au même que
 
+```r
+Manchots %&gt;% group_by(island, species) %&gt;%
+             summarise(n=n()) %&gt;% 
+             arrange(desc(n))
+```
 
 ---
 
 ## Descriptions
 
 - grouper/dégrouper
+
+```r
+Manchots %&gt;% group_by(island, species) %&gt;% 
+             summarise(nb = n(), .groups = "drop_last") %&gt;% 
+             mutate(pourcentage = nb / sum(nb) * 100)
+```
 
 ```
 ## # A tibble: 5 × 4
@@ -2068,9 +2154,21 @@ https://juba.github.io/tidyverse/
 ```
 
 
+```r
+Manchots %&gt;% summarise(nb = n(), .by = c(island, species)) %&gt;% 
+             mutate(pourcentage = nb / sum(nb) * 100, .by = island)
+Manchots %&gt;% 
+  summarise(nb = n(),.by = c(species, island)) %&gt;% 
+  mutate(pourcentage = nb/sum(nb)*100, .by = island)
+```
 ---
 ## Descriptions conditionnelles
 - version conditionnelle des fonctions , pour par exemple appliquer la même opération sur toutes les variables d'un même type 
+
+```r
+Manchots %&gt;% group_by(island, species) %&gt;% 
+             summarise_if(is.numeric,mean, na.rm = T)
+```
 
 ```
 ## # A tibble: 5 × 7
@@ -2087,16 +2185,36 @@ https://juba.github.io/tidyverse/
 ## Descriptions multiples
 - application d'une même fonction à plusieurs variables données
 
+```r
+Manchots %&gt;% summarise_at(vars(bill_l:flip_l),
+                          list(~ mean(., na.rm = TRUE), 
+                               ~ median(., na.rm = TRUE)))
+```
+
 ```
 ##   bill_l_mean bill_d_mean flip_l_mean bill_l_median bill_d_median flip_l_median
 ## 1    43.92193    17.15117    200.9152         44.45          17.3           197
 ```
 - autres façons
 
+```r
+Manchots %&gt;% summarise_at(vars(3:5),
+                          list(~ mean(., na.rm = TRUE),
+                               ~ median(., na.rm = TRUE)))
+Manchots %&gt;% summarise_at(vars(bill_l,bill_d,flip_l),
+                          list(~ mean(., na.rm = TRUE), 
+                               ~ median(., na.rm = TRUE)))
+```
 ---
 ## Manipulations d'un facteur
 - changement des niveaux d'un facteur donné
 
+
+```r
+Manchots %&gt;% 
+  mutate( species = fct_recode( species, "Delo" = "Adelie" )) %&gt;%
+  select(1:3)
+```
 
 ```
 ##       species    island bill_l
@@ -2450,6 +2568,12 @@ https://juba.github.io/tidyverse/
 - changement de niveaux sur tous les facteurs
 
 
+```r
+pingoo &lt;- Manchots %&gt;% mutate_if( is.factor, fct_recode,
+                                    "Delo" = "Adelie", 
+                                    "Delo" = "Dream") 
+```
+
 ```
 ## Warning: There were 3 warnings in `mutate()`.
 ## The first warning was:
@@ -2459,6 +2583,11 @@ https://juba.github.io/tidyverse/
 ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 2 remaining warnings.
 ```
 - petite vérification
+
+```r
+pingoo %&gt;% select_if(is.factor) %&gt;% 
+           str()
+```
 
 ```
 ## 'data.frame':	344 obs. of  3 variables:
@@ -2473,6 +2602,14 @@ https://juba.github.io/tidyverse/
 .pull-left[
 - on parle de pivot de données quand on cherche à changer la nature des individus statistiques, prenons un exemple où l'individu est ici un pays
 
+```r
+pays &lt;- c("Belgique", "France")
+pop1992 &lt;- c(10045622,	57374179) 
+pop1997 &lt;- c(10199787,	58623428)
+d &lt;- tibble(pays, pop1992, pop1997)
+d
+```
+
 ```
 ## # A tibble: 2 × 3
 ##   pays      pop1992  pop1997
@@ -2483,6 +2620,14 @@ https://juba.github.io/tidyverse/
 ]
 .pull-right[
 - on cherche alors à créer un tableau où l'individu est un recensement, et le pays une variable
+
+```r
+d &lt;- d %&gt;% pivot_longer(cols = starts_with("pop"),
+                         names_to = "année",
+                         values_to = "population",
+                         names_prefix = "pop")
+d
+```
 
 ```
 ## # A tibble: 4 × 3
@@ -2499,6 +2644,10 @@ https://juba.github.io/tidyverse/
 ## Transformations des données : un exemple
 .pull-left[
 
+```r
+d
+```
+
 ```
 ## # A tibble: 4 × 3
 ##   pays     année population
@@ -2511,6 +2660,12 @@ https://juba.github.io/tidyverse/
 
 ]
 .pull-right[
+
+```r
+d %&gt;% pivot_wider(names_from = année,
+                  values_from = population,
+                  names_prefix = "pop")
+```
 
 ```
 ## # A tibble: 2 × 3
@@ -2525,6 +2680,14 @@ https://juba.github.io/tidyverse/
 
 .pull-left[
 
+```r
+df1 &lt;- tibble(x = 1:3, 
+              z = c("a", "b", "c"))
+df2 &lt;- tibble(x = c(1, 1, 2), 
+              y = c("first", "second", "third"))
+df1
+```
+
 ```
 ## # A tibble: 3 × 2
 ##       x z    
@@ -2532,6 +2695,10 @@ https://juba.github.io/tidyverse/
 ## 1     1 a    
 ## 2     2 b    
 ## 3     3 c
+```
+
+```r
+df2
 ```
 
 ```
@@ -2545,6 +2712,10 @@ https://juba.github.io/tidyverse/
 ]
 .pull-left[
 
+```r
+df1 %&gt;% left_join(df2)
+```
+
 ```
 ## Joining with `by = join_by(x)`
 ```
@@ -2557,6 +2728,10 @@ https://juba.github.io/tidyverse/
 ## 2     1 a     second
 ## 3     2 b     third 
 ## 4     3 c     &lt;NA&gt;
+```
+
+```r
+df2 %&gt;% left_join(df1)
 ```
 
 ```
@@ -2577,11 +2752,20 @@ https://juba.github.io/tidyverse/
 ## Manipulations des chaînes de caractères : un exemple
 - concaténation et séparations simples
 
+```r
+d &lt;- Manchots %&gt;% unite(new , island, species)
+d %&gt;% slice(1:3)
+```
+
 ```
 ##                new bill_l bill_d flip_l mass    sex year
 ## 1 Torgersen_Adelie   39.1   18.7    181 3750   male 2007
 ## 2 Torgersen_Adelie   39.5   17.4    186 3800 female 2007
 ## 3 Torgersen_Adelie   40.3   18.0    195 3250 female 2007
+```
+
+```r
+d %&gt;% separate(new, c("ile", "espece")) %&gt;% slice(1:3)
 ```
 
 ```
@@ -2596,20 +2780,41 @@ https://juba.github.io/tidyverse/
 - transcription facile
 
 
-```
-## [1] "2010-12-15"
+```r
+# fonctions provenant de la librairie lubridate contenue dans le tidyverse
+ymd(20101215)
 ```
 
 ```
 ## [1] "2010-12-15"
+```
+
+```r
+ymd(101215)
+```
+
+```
+## [1] "2010-12-15"
+```
+
+```r
+mdy("4/1/17")
 ```
 
 ```
 ## [1] "2017-04-01"
 ```
 
+```r
+mdy("4-1-17")
+```
+
 ```
 ## [1] "2017-04-01"
+```
+
+```r
+mdy("04-1-2017")
 ```
 
 ```
@@ -2659,6 +2864,11 @@ class: inverse, middle, center
 - la structure lisible mais légèrement plus lourde qu'avec `plot()`
 .pull-left[
 
+```r
+Manchots %&gt;% 
+  ggplot(aes(x = species)) + 
+  geom_bar()
+```
 ]
 .pull-left[
 ![](IntroR_files/figure-html/unnamed-chunk-39-1.png)&lt;!-- --&gt;
@@ -2670,6 +2880,12 @@ class: inverse, middle, center
 - pour enrichir la représentation, il peut être intéressant de croiser les variables
 .pull-left[
 
+```r
+Manchots %&gt;%
+  ggplot() +
+  aes(x = species, fill = island)+
+  geom_bar()
+```
 ]
 .pull-right[
 ![](IntroR_files/figure-html/unnamed-chunk-41-1.png)&lt;!-- --&gt;
@@ -2681,6 +2897,12 @@ class: inverse, middle, center
 .pull-left[
 - plusieurs variantes possibles
 
+```r
+Manchots %&gt;% 
+  ggplot() +
+  aes(x = species, fill = island) +
+  geom_bar(position = position_dodge())
+```
 ]
 .pull-right[
 ![](IntroR_files/figure-html/unnamed-chunk-43-1.png)&lt;!-- --&gt;
@@ -2691,6 +2913,16 @@ class: inverse, middle, center
 .pull-left[
 - afin de rendre le graphique plus lisible
 
+```r
+Manchots %&gt;% ggplot(aes(x = species, fill = island)) + 
+  geom_bar(position = position_dodge()) +
+  ggtitle("Répartition des manchots par espèce") +
+  xlab("Espèces des manchots observés") +
+  ylab("Nombres d'individus") +
+  labs(fill = "Île") +#labs() permet de régler beaucoup de choses
+  theme(text = element_text(size = 15),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+```
 ]
 .pull-right[
 ![](IntroR_files/figure-html/unnamed-chunk-45-1.png)&lt;!-- --&gt;
@@ -2703,6 +2935,22 @@ class: inverse, middle, center
 .pull-left[
 - là encore il faut savoir si on veut un histogramme complet puis donner une répartition au sein d'une classe ou alors autant d'histogrammes que de modalités
 
+```r
+Manchots %&gt;% 
+  select(bill_l, sex) %&gt;%
+  na.omit() %&gt;%
+  ggplot() +
+  geom_histogram(
+    aes(
+      x = bill_l,
+      y = after_stat(density),
+      fill = sex
+    ),
+    bins = 6,
+    alpha = 0.4,
+    position = "identity"
+  )
+```
 ]
 .pull-right[
 ![](IntroR_files/figure-html/unnamed-chunk-47-1.png)&lt;!-- --&gt;
@@ -2714,6 +2962,12 @@ class: inverse, middle, center
 - comme pour les diagrammes en bâtons
 
 
+```r
+Manchots %&gt;%
+  ggplot() +
+  aes(x = species, y = bill_l, fill = island) +
+  geom_boxplot()
+```
 ]
 .pull-right[
 
@@ -2731,6 +2985,15 @@ class: inverse, middle, center
 - la fonction `geom_smooth()` permet d'ajouter les droites de régression par groupe ainsi que les intervalles de confiance sur la tendance
 .pull-left[
 
+```r
+p &lt;- Manchots %&gt;%
+  ggplot() +
+  aes(x = bill_l, y = bill_d, color = species) +
+  labs(x = "longueur de bec", y = "profondeur de bec", fill = "Espèce") +
+  geom_point() +
+  geom_smooth(method = "lm")
+p
+```
 ]
 .pull-right[
 
@@ -2757,6 +3020,16 @@ class: inverse, middle, center
 .pull-left[
 - changement de couleurs à l'aide des fonctions du type commençant par `scale_`
 
+```r
+mycolors = c("orange", "pink", "dodgerblue4", "yellow")
+p + scale_discrete_manual(
+  aesthetics = c("colour"),
+  values = mycolors)
+#argument fill disponible en aesthetics
+# plusieurs palettes déjà définies
+# par exemple pour les daltoniens :
+p + scale_color_viridis_d()
+```
 ]
 .pull-right[
 
@@ -2782,6 +3055,11 @@ class: inverse, middle, center
 - jeu possible avec plein de thèmes déjà enregistrés, fonctions commençant par : `theme_`
 .pull-left[
 
+```r
+p %&gt;% theme_dark()
+# nombre d'arguments différents dans le thème :
+length(names(theme_dark()))
+```
 ]
 .pull-right[
 
@@ -2822,6 +3100,30 @@ class: inverse, middle, center
 - suivant la qualité de l'interlocuteur, il peut être important de guider son oeil sur les parties du graphique sur lesquelles vous concentrez votre analyse
 .pull-left[
 
+```r
+p + annotate(
+  'curve',
+  x = 1:2,
+  y = c(37.8, 40.9),
+  xend = 1:2,
+  yend = c(42, 45.8),
+  curvature = -.25,
+  arrow = arrow(length = unit(.5, "cm"))
+) +
+  annotate('text',
+           x = 1.5,
+           y = 41.2,
+           label = "sauts du \n même ordre",
+           size = 15) +
+  annotate(
+    'rect',
+    xmin = 1.15,
+    xmax = 1.85,
+    ymin = 40,
+    ymax = 42.5,
+    alpha = .4
+  )
+```
 ]
 
 .pull-right[
@@ -2834,6 +3136,16 @@ class: inverse, middle, center
 .pull-left[
 - possibilité de créer une mosaïque
 
+```r
+Manchots %&gt;% 
+  na.omit() %&gt;% 
+  ggplot() +
+  aes(x = bill_l, y = after_stat(density), color = sex, fill = island) +
+  geom_histogram(alpha = 0.5) +
+  facet_wrap(~island+sex) +
+  labs(x = "longueur de bec", y = "densité", title = "histogrammes des longueurs de bec", fill = "île", color = "sexe")+
+    theme(text = element_text(size = 25))
+```
 ]
 .pull-right[
 
@@ -2851,6 +3163,13 @@ class: inverse, middle, center
 .pull-left[
 - deux solutions présentées ici, une première plutôt directe, avec le paquet `patchwork` 
 
+```r
+p1 &lt;- Manchots %&gt;% ggplot(aes(x=bill_l, y =bill_d, color = island)) + geom_point()
+p2 &lt;- Manchots %&gt;% ggplot(aes(x=bill_l, y = after_stat(density) , fill = island)) + geom_histogram(alpha = .6, bins = 7)
+p3&lt;- penguins %&gt;% ggplot(aes(x=bill_l, fill = island)) + geom_boxplot(alpha = .6)
+library(patchwork)
+p1/(p2+p3) 
+```
 ]
 .pull-right[
 
@@ -2879,6 +3198,12 @@ class: inverse, middle, center
 .pull-left[
 - la seconde solution,  un peu plus complète mais plus lourde avec la fonction  `ggpubr::ggarrange()`
 
+```r
+library(ggpubr)
+ggarrange(p1, p3, p2,
+          labels = c("A", "B", "C"),
+          ncol = 2, nrow = 2, common.legend = TRUE)
+```
 ]
 .pull-right[
 
@@ -2945,6 +3270,15 @@ class: inverse, middle, center
 - les fonctions changent et l'empilement se fait avec le pipe `%&gt;%`
 
 
+```r
+library(plotly)
+Manchots %&gt;% 
+  plot_ly(x = ~bill_d, y = ~bill_l, type = "scatter", mode = "markers") %&gt;% 
+  layout(
+    title = "longueur et profondeur de bec"
+    xaxis = list(title = "profondeur de bec"),
+    yaxis = list(title = "longueur de bec"))
+```
 ]
 .pull-right[
 
@@ -3023,6 +3357,9 @@ covid %&gt;% plot_ly(type = "scatter", mode = "lines") %&gt;%
 
 
 
+```r
+p  %&gt;%  ggplotly()
+```
 
 
 ```
