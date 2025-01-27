@@ -1,0 +1,41 @@
+---
+title: "Premiers pas"
+author: "Jean-Louis Marchand"
+date: "2025-01-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Mon premier R Markdown
+
+Pensez à commenter entre deux blocs de codes (on parle de *chunk*, pour en créer un rapidement taper Ctrl+Alt+I. Vous pouvez également ajouter des commentaires dans le chunk à l'aide d'un hashtag `#`
+
+## L'exemple des manchots
+
+```{r, echo=TRUE, eval = TRUE}
+Manchots <- read.table( #je raconte ce que je veux après un hashtag, cela ne change rien aux commandes
+  file = "penguins.csv",
+  header = TRUE,
+  sep = ";",
+  stringsAsFactors = TRUE
+) 
+```
+
+```{r, eval=TRUE, echo=TRUE}
+  str(Manchots)
+```
+
+```{r, eval=TRUE, echo=TRUE}
+  summary(Manchots)
+```
+
+## Chargement d'autres tableaux de données 
+
+A vous !
+
+
+

@@ -101,7 +101,9 @@ dplyr::filter() # celle du paquet dplyr faisant partie du tidyverse
 
 * créer un répertoire/dossier à l'aide de votre navigateur de fichiers
 * ouvrir `RStudio`, créer un projet associé au dossier
-* se connecter à la page suivante https://dcauseur.netlify.app/lifelong, vous avez accès aux différentes ressources de la formation, télécharger le fichier `premiers_pas.Rmd`, et placer le dans votre dossier
+* se connecter à la page suivante https://dcauseur.netlify.app/lifelong, vous avez accès aux différentes ressources de la formation, télécharger le fichier
+&lt;a href="https://jlmarchand.github.io/initiationR/premiers_pas.Rmd" target="_blank"&gt;premiers_pas.Rmd&lt;/a&gt;
+, et placer le dans votre dossier
 * dans `RStudio` cliquer sur le bouton `Knit`
 
 ---
@@ -231,10 +233,14 @@ Manchots &lt;- read.table(
 
 ## Allons-y !
 
-- télécharger tous les fichiers sur le site
+- télécharger tous les fichiers ci-dessous
+  + &lt;a href="https://jlmarchand.github.io/initiationR/cafe_DM.csv" target="_blank"&gt;sites producteurs de café&lt;/a&gt;
+  + &lt;a href="https://jlmarchand.github.io/initiationR/pois.csv" target="_blank"&gt;rendement de pois fourrager&lt;/a&gt;
+  + &lt;a href="https://jlmarchand.github.io/initiationR/donnees_echouages.csv" target="_blank"&gt;échouages d'algues &lt;/a&gt;
 - les copier dans le dossier du projet
 - charger les données dans `R` et vérifier la qualité du chargement
-
+- pour d'autres données, notamment des données `Excel` la librairie `readxl` permet de travailler en tenant compte de la structure riche de tels fichiers (feuillets, formules, macros, etc.)
+https://readxl.tidyverse.org/
 ---
 class: inverse, middle, center
 #  Manipulations des données avec `tidyverse`
