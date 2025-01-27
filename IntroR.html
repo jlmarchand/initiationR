@@ -1,0 +1,3147 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Formation manipulation avec R - Jour 1</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Marchand Jean-Louis" />
+    <script src="IntroR_files/header-attrs-2.25/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Formation manipulation avec R - Jour 1
+]
+.author[
+### Marchand Jean-Louis
+]
+.date[
+### 28/01/2025
+]
+
+---
+
+
+
+
+
+
+class: inverse, middle, center
+#  Contexte et motivations
+---
+
+## Pourquoi `R` ?
+
+* le langage `R` a été pensé pour les analyses statistiques, avec
+  + une communauté très active
+  + la gratuité
+  + l'enrichissement permanent par de nouveaux outils d'analyse 
+* loin d'ếtre la seule solution efficace : `Python`, `Julia`, `Sas`, ...
+* le plus important : **le logiciel n'est qu'un outil !**, il faut avoir une image assez précise de l'analyse statistique utilisée, les erreurs proviennent plus souvent de l'utilisateur qui ne sait pas interpréter les résulats ...
+
+---
+
+## Pourquoi  `RStudio` ?
+
+* travailler uniquement avec `R` peut paraître austère
+* le logiciel `RStudio` est un IDE (*Integrated Development Environment
+*) fournissant un environnement de travail pour interagir avec `R` 
+  
+&lt;img src="IDE.png" width="700px" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+## Les bibliothèques
+
+* l'installation de base de `R` comporte un ensemble de fonctions vitales
+* les contributeurs n'interviennent pas sur ce noyau de base mais créent des bibliothèques (ou paquets) dans lesquelles de nouvelles fonctions sont définies
+* l'onglet `Packages` dans la partie inférieure droite de `RStudio` permet la gestion des ces bibliothèques 
+* installer le paquet `tidyverse`
+* pour avoir accès aux fonctions d'une bibliothèque, par exemple `tidyverse` la commande à utiliser est 
+
+```r
+library('tidyverse') #le nom exact entre guillemets
+```
+* plusieurs fonctions peuvent avoir le même nom parce que provenant de différentes bibliothèques, on peut alors spécifier
+
+```r
+stats::filter() # fonction filter du paquet stats
+dplyr::filter() # celle du paquet dplyr faisant partie du tidyverse
+```
+
+
+---
+
+## Organiser son travail
+
+* prendre de bonnes habitudes permet de s'y retrouver plus facilement
+* rangement de tous les fichiers attenant à un étude dans un même dossier/répertoire clairement localisé dans l'arobrescence de fichiers de son espace de stockage (disque dur, clé, cloud, etc.)
+* `RStudio` permet la création d'un *projet* qui permettra à `R` de savoir où chercher et ou stocker
+* pour créer un *projet*, cliquer sur `Project` en haut à droite
+  + si le répertoire/dossier existe déjà (conseillé), retrouver et  sélectionner le dossier à partir de l'arborescence
+  + sinon retrouver et  sélectionner le dossier à partir de l'arborescence dans lequel un nouveau dossier sera créé
+* le projet possède le même nom que le dossier ! donner un nom explicite et non générique
+* pour passer d'un projet à un autre, recliquer en haut à droite de `RStudio`, ou cliquer sur le fichier `nom_du_projet.Rproj` dans le dossier du projet
+
+---
+
+## Le type de fichier
+
+* le fichier brut d'extension `.R` est ce qu'on appelle un *script*, un fichier texte qui liste les commandes qu'on désire stocker, on peut ensuite exécuter 
+  + ligne à ligne, avec le bouton `Run`
+  + l'ensemble des lignes, avec le bouton `Source`
+* le fichier d'extension `.Rmd` est ce qu'on appelle un *markdown*, un fichier qui permet d'alterner des parties texte et des parties script; en praique, très agréable pour rédiger des rapports en `.pdf` ou `.html` (ce support est généré de cette façon), l'exécution se fait à l'aide du bouton `Knit`
+
+---
+
+## Allons-y
+
+* créer un répertoire/dossier à l'aide de votre navigateur de fichiers
+* ouvrir `RStudio`, créer un projet associé au dossier
+* se connecter à la page suivante https://dcauseur.netlify.app/lifelong, vous avez accès aux différentes ressources de la formation, télécharger le fichier `premiers_pas.Rmd`, et placer le dans votre dossier
+* dans `RStudio` cliquer sur le bouton `Knit`
+
+---
+
+class: inverse, middle, center
+#  Les données
+---
+
+## Le cadre statistique
+
+* le format d'un tableau dans `R` correspond au formalisme commun aux analyses statistiques
+  + en ligne, une *observation* ou *individu statistique*
+  + en colonnes les *variables* représentant les mêmes informations collectées (quantitatives = numériques et qualitatives = catégorielles) chez chaque individu
+* les données sont toujours enregistrées dans un fichier externe à `R` (dans un tableur le plus souvent), **ne jamais modifier ce fichier une fois l'enregistrement effectué !!!**
+  + le bloquer en écriture (dans les propriétés du fichier `lecture seule`)
+  + pour des résumés dans un tableur, faire une copie de la source
+  + les logiciels statistiques importent les données sans altérer la source, on peut alors modifier l'objet existant dans `R` sans risque de perdre des informations
+  + trop de fois, des gens écrasent la source en travaillant directement dans le fichier sur tableur et perdent **définitivement** des résultats d'expérience qui représentent des heures de travail et certainement des moyens  lourds et onéreux
+
+---
+
+## Premier obstacle
+
+* la démarche pour charger des données peut sembler lourde, en réalité elle offre une véritable souplesse, le but  : pouvoir lire n'importe quel fichier qui peut représenter une structure de tableau
+* pour comprendre, 
+  + beaucoup de tableaux sont stockés dans des fichiers de type texte `.txt`, `.csv`, etc. 
+  + plusieurs façons de repérer dans le texte le passage à la colonne suivante
+* les principaux arguments à maîtriser de la fonction de base `read.table()` (les arguments d'une fonction sont toujours entre parenthèses séparés d'une virgule)
+  + `file = ` : on spécifie le nom **exact** du fichier **entre guillemets** (utilisation de la touche `tab` du clavier)
+  + `sep = ` : on spécifie encore **entre guillemets** le symbole qui sépare les colonnes dans fichier source
+  + `header = ` : la réponse à donner est `TRUE` si le nom des variables apparaît dans le fichier et `FALSE` sinon
+  + `dec = ` : indispensable si le fichier est enregistré à la française, on spécifie à `R` qu'il doit reconnaître la virgule `dec  = ','` comme séparateur entre entier et décimales
+  + `stringsAsFactors = ` : la réponse à donner est `TRUE` si l'on veut que `R` reconnaisse les noms qui apparaissent dans les cases comme des catégories d'une variable qualitative
+  
+---
+
+### Un exemple
+
+&lt;img src="fichier_brut.png" width="700px" style="display: block; margin: auto;" /&gt;
+
+* la première ligne contient le nom des variables
+* les informations/colonnes sont séparées par un point-virgule
+* les variables `species`, `island`, `sex` sont clairement catégorielles
+
+
+---
+
+### Un exemple
+
+```r
+Manchots &lt;- read.table(
+  file = "penguins.csv",
+  header = TRUE,
+  sep = ";",
+  stringsAsFactors = TRUE
+) 
+```
+* le logiciel ne mémorise pas le fichier externe `penguins.csv`, il  le lit une fois suivant les clés fournies et génère un objet appelé ici `Manchots` (on stocke à l'aide de la flèche `&lt;-`, le signe `=` fonctionne également mais les côtés ont des **rôles asymétriques**)
+* par la suite, il ne sera question que de modifications de cet objet `Manchots`, la source n'est ni modifiée, ni consultée
+* l'absence de message à l'exécution signifie que l'action a été réalisée sans problème
+* l'apparition d'un message peut signifier plusieurs choses 
+  + une **erreur** : la commande est interrompue
+  + une **alarme** : la commande est terminée mais le logiciel a dû arbitrer certains choix, il liste ces arbitrages
+
+---
+### Un exemple
+* le logiciel est intransigeant, c'est ce qui le rend robuste (sûr) et rigide (austère) à la fois , faire la parallèle avec un numéro de téléphone que l'on compose
+  + ça sonne et la bonne personne répond, parfait !
+  + ça sonne et une personne répond mais ce n'est pas la bonne, on peut mettre du temps à s'en apercevoir
+  + le numéro n'est pas attribué, ce n'est pas bon mais au moins on le sait tout de suite !
+* pour distinguer les deux premiers cas, il faut penser à **vérifier** le bon chargement des données, par exemple deux fonctions sympathique `str` (pour structure) et `summary` (pour résumé)
+
+---
+### Un exemple
+
+```r
+  str(Manchots)
+```
+
+```
+## 'data.frame':	344 obs. of  8 variables:
+##  $ species          : Factor w/ 3 levels "Adelie","Chinstrap",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ island           : Factor w/ 3 levels "Biscoe","Dream",..: 3 3 3 3 3 3 3 3 3 3 ...
+##  $ bill_length_mm   : num  39.1 39.5 40.3 NA 36.7 39.3 38.9 39.2 34.1 42 ...
+##  $ bill_depth_mm    : num  18.7 17.4 18 NA 19.3 20.6 17.8 19.6 18.1 20.2 ...
+##  $ flipper_length_mm: int  181 186 195 NA 193 190 181 195 193 190 ...
+##  $ body_mass_g      : int  3750 3800 3250 NA 3450 3650 3625 4675 3475 4250 ...
+##  $ sex              : Factor w/ 2 levels "female","male": 2 1 1 NA 1 2 1 2 NA NA ...
+##  $ year             : int  2007 2007 2007 2007 2007 2007 2007 2007 2007 2007 ...
+```
+
+* l'objet dans `R` est un `data.frame`, un format dédié aux tableaux
+* il y a 344 individus statistiques (ici des manchots), pour lesquels 8 valeurs sont enregistrées
+* les variables de type `Factor` sont les variables catégorielles/qualitatives pour `R`, les catégories sont comptées et  listées (les `NA` désignent les valeurs manquantes = les cases vides)
+* les variables `num` (pour *numeric*) et `int` (pour *integer*, nombre entier) ont reconnues comme des variables quantitatives
+
+---
+### Un exemple
+
+```r
+  summary(Manchots)
+```
+
+```
+##       species          island    bill_length_mm  bill_depth_mm  
+##  Adelie   :152   Biscoe   :168   Min.   :32.10   Min.   :13.10  
+##  Chinstrap: 68   Dream    :124   1st Qu.:39.23   1st Qu.:15.60  
+##  Gentoo   :124   Torgersen: 52   Median :44.45   Median :17.30  
+##                                  Mean   :43.92   Mean   :17.15  
+##                                  3rd Qu.:48.50   3rd Qu.:18.70  
+##                                  Max.   :59.60   Max.   :21.50  
+##                                  NA's   :2       NA's   :2      
+##  flipper_length_mm  body_mass_g       sex           year     
+##  Min.   :172.0     Min.   :2700   female:165   Min.   :2007  
+##  1st Qu.:190.0     1st Qu.:3550   male  :168   1st Qu.:2007  
+##  Median :197.0     Median :4050   NA's  : 11   Median :2008  
+##  Mean   :200.9     Mean   :4202                Mean   :2008  
+##  3rd Qu.:213.0     3rd Qu.:4750                3rd Qu.:2009  
+##  Max.   :231.0     Max.   :6300                Max.   :2009  
+##  NA's   :2         NA's   :2
+```
+
+* les variables quantitatives sont résumées à l'aide des quartiles et de la moyenne
+* pour les quantitatives, un effectif de chaque catégorie est fourni
+
+---
+
+## Allons-y !
+
+- télécharger tous les fichiers sur le site
+- les copier dans le dossier du projet
+- charger les données dans `R` et vérifier la qualité du chargement
+
+---
+class: inverse, middle, center
+#  Manipulations des données avec `tidyverse`
+---
+
+## Premières approches
+
+* nettoyage et mise en forme
+* **statistiques descriptives**
+  + représentations élémentaires
+  + résumés numériques
+  + et plus encore (programme de demain)
+* **statistiques inférentielles**
+  + décider si des écarts sont anecdotiques ou suffisamment marqués pour en tirer des conclusions (programme de demain)
+  
+---
+
+## La mise en forme
+
+* souvent, tout ne se passe pas comme prévu :
+  + inhomomgénéités du format, par exemple : "oui", "Oui", et "OUI"
+  + catégories numérotées reconnues comme des nombres
+  + valeurs manquantes,aberrantes
+  
+---
+
+## La bibliothèque de bibliothèques : `tidyverse`
+
+Le paquet **tidyverse** est un regroupement de plusieurs paquets (cf https://www.tidyverse.org/ pour des descriptions et surtout les **cheatsheets**). Grossièrement :
+
+- **tibble** pour la structure des données (nouveau format différent d'un data.frame ou .table)
+- **dplyr** pour la manipulation et l'analyse proprement dite
+- **forcats** pour des fonctionnalités propres aux facteurs
+- **tidyr** pour la préparation des données (pivots et autres)
+- **lubridate** pour la gestion des dates
+- **stringr** pour la gestion des chaînes de caractères
+- **readr** pour l'importation (format tibble en sortie)
+- **ggplot2** pour les graphiques
+- **purrr** pour la programmation
+- ...
+
+---
+
+## Chargement des paquets
+
+- le chargement du package `tidyverse` permet le chargement de tous les packages listés précédemment
+
+```r
+library(tidyverse)
+```
+
+- **Attention** les fonctions de R Base, `stats::filter()` et `stats::lag()` servent notamment pour les études de séries temporelles, elles restent disponibles tant qu'on précise le paquet dans l'appel de la fonction, sinon, le choix par défaut correspondra désormais aux fonctions du `dplyr` dont l'action n'a rien à voir avec ses homonymes 
+
+---
+
+## Début de discussion
+
+- boîte à outils standard
+- lisibilité du code (/base)
+- prise en main plus naturelle ? (format par défaut dans RStudio)
+- comme toujours : coût d'entrée
+- plus orienté utilisateur que performance (/data.table)
+
+Présentation de tidyverse essentiellement basée sur une lecture du tutoriel suivant
+
+https://juba.github.io/tidyverse/
+
+---
+
+---
+
+## Les fonctions dplyr : rename
+- changement des noms de variable assez simple
+
+```
+## Rows: 344
+## Columns: 8
+## $ species &lt;fct&gt; Adelie, Adelie, Adelie, Adelie, Adelie, Adelie, Adelie, Adelie…
+## $ island  &lt;fct&gt; Torgersen, Torgersen, Torgersen, Torgersen, Torgersen, Torgers…
+## $ bill_l  &lt;dbl&gt; 39.1, 39.5, 40.3, NA, 36.7, 39.3, 38.9, 39.2, 34.1, 42.0, 37.8…
+## $ bill_d  &lt;dbl&gt; 18.7, 17.4, 18.0, NA, 19.3, 20.6, 17.8, 19.6, 18.1, 20.2, 17.1…
+## $ flip_l  &lt;int&gt; 181, 186, 195, NA, 193, 190, 181, 195, 193, 190, 186, 180, 182…
+## $ mass    &lt;int&gt; 3750, 3800, 3250, NA, 3450, 3650, 3625, 4675, 3475, 4250, 3300…
+## $ sex     &lt;fct&gt; male, female, female, NA, female, male, female, male, NA, NA, …
+## $ year    &lt;int&gt; 2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007, 20…
+```
+
+
+---
+
+## Les fonctions dplyr : slice
+- sélection de lignes/individus par leur position dans le tableau
+
+```
+##   species    island bill_l bill_d flip_l mass    sex year
+## 1  Adelie Torgersen   40.2     17    176 3450 female 2009
+```
+
+```
+##   species    island bill_l bill_d flip_l mass    sex year
+## 1  Adelie Torgersen   40.3   18.0    195 3250 female 2007
+## 2  Adelie Torgersen     NA     NA     NA   NA   &lt;NA&gt; 2007
+## 3  Adelie Torgersen   36.7   19.3    193 3450 female 2007
+## 4  Adelie Torgersen   39.3   20.6    190 3650   male 2007
+```
+
+---
+
+## Les fonctions dplyr : filter
+.pull-left[
+- rappel sur les opérateur logiques
+  + `&amp;` pour "et", la réponse est `TRUE` si toutes les conditions sont satisfaites
+  + `|` pour "ou", la réponse est `TRUE` si au moins une des conditions sont satisfaites
+  + `!` pour "non", la réponse est `TRUE` si la condition est fausse
+
+```
+## [1] FALSE
+```
+
+```
+## [1] TRUE
+```
+
+```
+## [1] TRUE
+```
+]
+.pull-right[
+- sélection de lignes/individus par condition(s) sur les valeurs des variables
+
+```
+##       species island bill_l bill_d flip_l mass    sex year
+## 1      Gentoo Biscoe   46.1   13.2    211 4500 female 2007
+## 2      Gentoo Biscoe   50.0   16.3    230 5700   male 2007
+## 3      Gentoo Biscoe   48.7   14.1    210 4450 female 2007
+## 4      Gentoo Biscoe   50.0   15.2    218 5700   male 2007
+## 5      Gentoo Biscoe   47.6   14.5    215 5400   male 2007
+## 6      Gentoo Biscoe   46.5   13.5    210 4550 female 2007
+## 7      Gentoo Biscoe   45.4   14.6    211 4800 female 2007
+## 8      Gentoo Biscoe   46.7   15.3    219 5200   male 2007
+## 9      Gentoo Biscoe   43.3   13.4    209 4400 female 2007
+## 10     Gentoo Biscoe   46.8   15.4    215 5150   male 2007
+## 11     Gentoo Biscoe   40.9   13.7    214 4650 female 2007
+## 12     Gentoo Biscoe   49.0   16.1    216 5550   male 2007
+## 13     Gentoo Biscoe   45.5   13.7    214 4650 female 2007
+## 14     Gentoo Biscoe   48.4   14.6    213 5850   male 2007
+## 15     Gentoo Biscoe   45.8   14.6    210 4200 female 2007
+## 16     Gentoo Biscoe   49.3   15.7    217 5850   male 2007
+## 17     Gentoo Biscoe   42.0   13.5    210 4150 female 2007
+## 18     Gentoo Biscoe   49.2   15.2    221 6300   male 2007
+## 19     Gentoo Biscoe   46.2   14.5    209 4800 female 2007
+## 20     Gentoo Biscoe   48.7   15.1    222 5350   male 2007
+## 21     Gentoo Biscoe   50.2   14.3    218 5700   male 2007
+## 22     Gentoo Biscoe   45.1   14.5    215 5000 female 2007
+## 23     Gentoo Biscoe   46.5   14.5    213 4400 female 2007
+## 24     Gentoo Biscoe   46.3   15.8    215 5050   male 2007
+## 25     Gentoo Biscoe   42.9   13.1    215 5000 female 2007
+## 26     Gentoo Biscoe   46.1   15.1    215 5100   male 2007
+## 27     Gentoo Biscoe   44.5   14.3    216 4100   &lt;NA&gt; 2007
+## 28     Gentoo Biscoe   47.8   15.0    215 5650   male 2007
+## 29     Gentoo Biscoe   48.2   14.3    210 4600 female 2007
+## 30     Gentoo Biscoe   50.0   15.3    220 5550   male 2007
+## 31     Gentoo Biscoe   47.3   15.3    222 5250   male 2007
+## 32     Gentoo Biscoe   42.8   14.2    209 4700 female 2007
+## 33     Gentoo Biscoe   45.1   14.5    207 5050 female 2007
+## 34     Gentoo Biscoe   59.6   17.0    230 6050   male 2007
+## 35     Gentoo Biscoe   49.1   14.8    220 5150 female 2008
+## 36     Gentoo Biscoe   48.4   16.3    220 5400   male 2008
+## 37     Gentoo Biscoe   42.6   13.7    213 4950 female 2008
+## 38     Gentoo Biscoe   44.4   17.3    219 5250   male 2008
+## 39     Gentoo Biscoe   44.0   13.6    208 4350 female 2008
+## 40     Gentoo Biscoe   48.7   15.7    208 5350   male 2008
+## 41     Gentoo Biscoe   42.7   13.7    208 3950 female 2008
+## 42     Gentoo Biscoe   49.6   16.0    225 5700   male 2008
+## 43     Gentoo Biscoe   45.3   13.7    210 4300 female 2008
+## 44     Gentoo Biscoe   49.6   15.0    216 4750   male 2008
+## 45     Gentoo Biscoe   50.5   15.9    222 5550   male 2008
+## 46     Gentoo Biscoe   43.6   13.9    217 4900 female 2008
+## 47     Gentoo Biscoe   45.5   13.9    210 4200 female 2008
+## 48     Gentoo Biscoe   50.5   15.9    225 5400   male 2008
+## 49     Gentoo Biscoe   44.9   13.3    213 5100 female 2008
+## 50     Gentoo Biscoe   45.2   15.8    215 5300   male 2008
+## 51     Gentoo Biscoe   46.6   14.2    210 4850 female 2008
+## 52     Gentoo Biscoe   48.5   14.1    220 5300   male 2008
+## 53     Gentoo Biscoe   45.1   14.4    210 4400 female 2008
+## 54     Gentoo Biscoe   50.1   15.0    225 5000   male 2008
+## 55     Gentoo Biscoe   46.5   14.4    217 4900 female 2008
+## 56     Gentoo Biscoe   45.0   15.4    220 5050   male 2008
+## 57     Gentoo Biscoe   43.8   13.9    208 4300 female 2008
+## 58     Gentoo Biscoe   45.5   15.0    220 5000   male 2008
+## 59     Gentoo Biscoe   43.2   14.5    208 4450 female 2008
+## 60     Gentoo Biscoe   50.4   15.3    224 5550   male 2008
+## 61     Gentoo Biscoe   45.3   13.8    208 4200 female 2008
+## 62     Gentoo Biscoe   46.2   14.9    221 5300   male 2008
+## 63     Gentoo Biscoe   45.7   13.9    214 4400 female 2008
+## 64     Gentoo Biscoe   54.3   15.7    231 5650   male 2008
+## 65     Gentoo Biscoe   45.8   14.2    219 4700 female 2008
+## 66     Gentoo Biscoe   49.8   16.8    230 5700   male 2008
+## 67     Gentoo Biscoe   46.2   14.4    214 4650   &lt;NA&gt; 2008
+## 68     Gentoo Biscoe   49.5   16.2    229 5800   male 2008
+## 69     Gentoo Biscoe   43.5   14.2    220 4700 female 2008
+## 70     Gentoo Biscoe   50.7   15.0    223 5550   male 2008
+## 71     Gentoo Biscoe   47.7   15.0    216 4750 female 2008
+## 72     Gentoo Biscoe   46.4   15.6    221 5000   male 2008
+## 73     Gentoo Biscoe   48.2   15.6    221 5100   male 2008
+## 74     Gentoo Biscoe   46.5   14.8    217 5200 female 2008
+## 75     Gentoo Biscoe   46.4   15.0    216 4700 female 2008
+## 76     Gentoo Biscoe   48.6   16.0    230 5800   male 2008
+## 77     Gentoo Biscoe   47.5   14.2    209 4600 female 2008
+## 78     Gentoo Biscoe   51.1   16.3    220 6000   male 2008
+## 79     Gentoo Biscoe   45.2   13.8    215 4750 female 2008
+## 80     Gentoo Biscoe   45.2   16.4    223 5950   male 2008
+## 81     Gentoo Biscoe   49.1   14.5    212 4625 female 2009
+## 82     Gentoo Biscoe   52.5   15.6    221 5450   male 2009
+## 83     Gentoo Biscoe   47.4   14.6    212 4725 female 2009
+## 84     Gentoo Biscoe   50.0   15.9    224 5350   male 2009
+## 85     Gentoo Biscoe   44.9   13.8    212 4750 female 2009
+## 86     Gentoo Biscoe   50.8   17.3    228 5600   male 2009
+## 87     Gentoo Biscoe   43.4   14.4    218 4600 female 2009
+## 88     Gentoo Biscoe   51.3   14.2    218 5300   male 2009
+## 89     Gentoo Biscoe   47.5   14.0    212 4875 female 2009
+## 90     Gentoo Biscoe   52.1   17.0    230 5550   male 2009
+## 91     Gentoo Biscoe   47.5   15.0    218 4950 female 2009
+## 92     Gentoo Biscoe   52.2   17.1    228 5400   male 2009
+## 93     Gentoo Biscoe   45.5   14.5    212 4750 female 2009
+## 94     Gentoo Biscoe   49.5   16.1    224 5650   male 2009
+## 95     Gentoo Biscoe   44.5   14.7    214 4850 female 2009
+## 96     Gentoo Biscoe   50.8   15.7    226 5200   male 2009
+## 97     Gentoo Biscoe   49.4   15.8    216 4925   male 2009
+## 98     Gentoo Biscoe   46.9   14.6    222 4875 female 2009
+## 99     Gentoo Biscoe   48.4   14.4    203 4625 female 2009
+## 100    Gentoo Biscoe   51.1   16.5    225 5250   male 2009
+## 101    Gentoo Biscoe   48.5   15.0    219 4850 female 2009
+## 102    Gentoo Biscoe   55.9   17.0    228 5600   male 2009
+## 103    Gentoo Biscoe   47.2   15.5    215 4975 female 2009
+## 104    Gentoo Biscoe   49.1   15.0    228 5500   male 2009
+## 105    Gentoo Biscoe   47.3   13.8    216 4725   &lt;NA&gt; 2009
+## 106    Gentoo Biscoe   46.8   16.1    215 5500   male 2009
+## 107    Gentoo Biscoe   41.7   14.7    210 4700 female 2009
+## 108    Gentoo Biscoe   53.4   15.8    219 5500   male 2009
+## 109    Gentoo Biscoe   43.3   14.0    208 4575 female 2009
+## 110    Gentoo Biscoe   48.1   15.1    209 5500   male 2009
+## 111    Gentoo Biscoe   50.5   15.2    216 5000 female 2009
+## 112    Gentoo Biscoe   49.8   15.9    229 5950   male 2009
+## 113    Gentoo Biscoe   43.5   15.2    213 4650 female 2009
+## 114    Gentoo Biscoe   51.5   16.3    230 5500   male 2009
+## 115    Gentoo Biscoe   46.2   14.1    217 4375 female 2009
+## 116    Gentoo Biscoe   55.1   16.0    230 5850   male 2009
+## 117    Gentoo Biscoe   44.5   15.7    217 4875   &lt;NA&gt; 2009
+## 118    Gentoo Biscoe   48.8   16.2    222 6000   male 2009
+## 119    Gentoo Biscoe   47.2   13.7    214 4925 female 2009
+## 120    Gentoo Biscoe   46.8   14.3    215 4850 female 2009
+## 121    Gentoo Biscoe   50.4   15.7    222 5750   male 2009
+## 122    Gentoo Biscoe   45.2   14.8    212 5200 female 2009
+## 123    Gentoo Biscoe   49.9   16.1    213 5400   male 2009
+## 124 Chinstrap  Dream   46.5   17.9    192 3500 female 2007
+## 125 Chinstrap  Dream   50.0   19.5    196 3900   male 2007
+## 126 Chinstrap  Dream   51.3   19.2    193 3650   male 2007
+## 127 Chinstrap  Dream   45.4   18.7    188 3525 female 2007
+## 128 Chinstrap  Dream   52.7   19.8    197 3725   male 2007
+## 129 Chinstrap  Dream   45.2   17.8    198 3950 female 2007
+## 130 Chinstrap  Dream   46.1   18.2    178 3250 female 2007
+## 131 Chinstrap  Dream   51.3   18.2    197 3750   male 2007
+## 132 Chinstrap  Dream   46.0   18.9    195 4150 female 2007
+## 133 Chinstrap  Dream   51.3   19.9    198 3700   male 2007
+## 134 Chinstrap  Dream   46.6   17.8    193 3800 female 2007
+## 135 Chinstrap  Dream   51.7   20.3    194 3775   male 2007
+## 136 Chinstrap  Dream   47.0   17.3    185 3700 female 2007
+## 137 Chinstrap  Dream   52.0   18.1    201 4050   male 2007
+## 138 Chinstrap  Dream   45.9   17.1    190 3575 female 2007
+## 139 Chinstrap  Dream   50.5   19.6    201 4050   male 2007
+## 140 Chinstrap  Dream   50.3   20.0    197 3300   male 2007
+## 141 Chinstrap  Dream   58.0   17.8    181 3700 female 2007
+## 142 Chinstrap  Dream   46.4   18.6    190 3450 female 2007
+## 143 Chinstrap  Dream   49.2   18.2    195 4400   male 2007
+## 144 Chinstrap  Dream   42.4   17.3    181 3600 female 2007
+## 145 Chinstrap  Dream   48.5   17.5    191 3400   male 2007
+## 146 Chinstrap  Dream   43.2   16.6    187 2900 female 2007
+## 147 Chinstrap  Dream   50.6   19.4    193 3800   male 2007
+## 148 Chinstrap  Dream   46.7   17.9    195 3300 female 2007
+## 149 Chinstrap  Dream   52.0   19.0    197 4150   male 2007
+## 150 Chinstrap  Dream   50.5   18.4    200 3400 female 2008
+## 151 Chinstrap  Dream   49.5   19.0    200 3800   male 2008
+## 152 Chinstrap  Dream   46.4   17.8    191 3700 female 2008
+## 153 Chinstrap  Dream   52.8   20.0    205 4550   male 2008
+## 154 Chinstrap  Dream   40.9   16.6    187 3200 female 2008
+## 155 Chinstrap  Dream   54.2   20.8    201 4300   male 2008
+## 156 Chinstrap  Dream   42.5   16.7    187 3350 female 2008
+## 157 Chinstrap  Dream   51.0   18.8    203 4100   male 2008
+## 158 Chinstrap  Dream   49.7   18.6    195 3600   male 2008
+## 159 Chinstrap  Dream   47.5   16.8    199 3900 female 2008
+## 160 Chinstrap  Dream   47.6   18.3    195 3850 female 2008
+## 161 Chinstrap  Dream   52.0   20.7    210 4800   male 2008
+## 162 Chinstrap  Dream   46.9   16.6    192 2700 female 2008
+## 163 Chinstrap  Dream   53.5   19.9    205 4500   male 2008
+## 164 Chinstrap  Dream   49.0   19.5    210 3950   male 2008
+## 165 Chinstrap  Dream   46.2   17.5    187 3650 female 2008
+## 166 Chinstrap  Dream   50.9   19.1    196 3550   male 2008
+## 167 Chinstrap  Dream   45.5   17.0    196 3500 female 2008
+## 168 Chinstrap  Dream   50.9   17.9    196 3675 female 2009
+## 169 Chinstrap  Dream   50.8   18.5    201 4450   male 2009
+## 170 Chinstrap  Dream   50.1   17.9    190 3400 female 2009
+## 171 Chinstrap  Dream   49.0   19.6    212 4300   male 2009
+## 172 Chinstrap  Dream   51.5   18.7    187 3250   male 2009
+## 173 Chinstrap  Dream   49.8   17.3    198 3675 female 2009
+## 174 Chinstrap  Dream   48.1   16.4    199 3325 female 2009
+## 175 Chinstrap  Dream   51.4   19.0    201 3950   male 2009
+## 176 Chinstrap  Dream   45.7   17.3    193 3600 female 2009
+## 177 Chinstrap  Dream   50.7   19.7    203 4050   male 2009
+## 178 Chinstrap  Dream   42.5   17.3    187 3350 female 2009
+## 179 Chinstrap  Dream   52.2   18.8    197 3450   male 2009
+## 180 Chinstrap  Dream   45.2   16.6    191 3250 female 2009
+## 181 Chinstrap  Dream   49.3   19.9    203 4050   male 2009
+## 182 Chinstrap  Dream   50.2   18.8    202 3800   male 2009
+## 183 Chinstrap  Dream   45.6   19.4    194 3525 female 2009
+## 184 Chinstrap  Dream   51.9   19.5    206 3950   male 2009
+## 185 Chinstrap  Dream   46.8   16.5    189 3650 female 2009
+## 186 Chinstrap  Dream   45.7   17.0    195 3650 female 2009
+## 187 Chinstrap  Dream   55.8   19.8    207 4000   male 2009
+## 188 Chinstrap  Dream   43.5   18.1    202 3400 female 2009
+## 189 Chinstrap  Dream   49.6   18.2    193 3775   male 2009
+## 190 Chinstrap  Dream   50.8   19.0    210 4100   male 2009
+## 191 Chinstrap  Dream   50.2   18.7    198 3775 female 2009
+```
+]
+  
+---
+
+## Les fonctions dplyr : select
+
+.pull-left[
+- sélection de colonnes/variables par nom ou condition
+
+```
+##       species bill_l
+## 1      Adelie   39.1
+## 2      Adelie   39.5
+## 3      Adelie   40.3
+## 4      Adelie     NA
+## 5      Adelie   36.7
+## 6      Adelie   39.3
+## 7      Adelie   38.9
+## 8      Adelie   39.2
+## 9      Adelie   34.1
+## 10     Adelie   42.0
+## 11     Adelie   37.8
+## 12     Adelie   37.8
+## 13     Adelie   41.1
+## 14     Adelie   38.6
+## 15     Adelie   34.6
+## 16     Adelie   36.6
+## 17     Adelie   38.7
+## 18     Adelie   42.5
+## 19     Adelie   34.4
+## 20     Adelie   46.0
+## 21     Adelie   37.8
+## 22     Adelie   37.7
+## 23     Adelie   35.9
+## 24     Adelie   38.2
+## 25     Adelie   38.8
+## 26     Adelie   35.3
+## 27     Adelie   40.6
+## 28     Adelie   40.5
+## 29     Adelie   37.9
+## 30     Adelie   40.5
+## 31     Adelie   39.5
+## 32     Adelie   37.2
+## 33     Adelie   39.5
+## 34     Adelie   40.9
+## 35     Adelie   36.4
+## 36     Adelie   39.2
+## 37     Adelie   38.8
+## 38     Adelie   42.2
+## 39     Adelie   37.6
+## 40     Adelie   39.8
+## 41     Adelie   36.5
+## 42     Adelie   40.8
+## 43     Adelie   36.0
+## 44     Adelie   44.1
+## 45     Adelie   37.0
+## 46     Adelie   39.6
+## 47     Adelie   41.1
+## 48     Adelie   37.5
+## 49     Adelie   36.0
+## 50     Adelie   42.3
+## 51     Adelie   39.6
+## 52     Adelie   40.1
+## 53     Adelie   35.0
+## 54     Adelie   42.0
+## 55     Adelie   34.5
+## 56     Adelie   41.4
+## 57     Adelie   39.0
+## 58     Adelie   40.6
+## 59     Adelie   36.5
+## 60     Adelie   37.6
+## 61     Adelie   35.7
+## 62     Adelie   41.3
+## 63     Adelie   37.6
+## 64     Adelie   41.1
+## 65     Adelie   36.4
+## 66     Adelie   41.6
+## 67     Adelie   35.5
+## 68     Adelie   41.1
+## 69     Adelie   35.9
+## 70     Adelie   41.8
+## 71     Adelie   33.5
+## 72     Adelie   39.7
+## 73     Adelie   39.6
+## 74     Adelie   45.8
+## 75     Adelie   35.5
+## 76     Adelie   42.8
+## 77     Adelie   40.9
+## 78     Adelie   37.2
+## 79     Adelie   36.2
+## 80     Adelie   42.1
+## 81     Adelie   34.6
+## 82     Adelie   42.9
+## 83     Adelie   36.7
+## 84     Adelie   35.1
+## 85     Adelie   37.3
+## 86     Adelie   41.3
+## 87     Adelie   36.3
+## 88     Adelie   36.9
+## 89     Adelie   38.3
+## 90     Adelie   38.9
+## 91     Adelie   35.7
+## 92     Adelie   41.1
+## 93     Adelie   34.0
+## 94     Adelie   39.6
+## 95     Adelie   36.2
+## 96     Adelie   40.8
+## 97     Adelie   38.1
+## 98     Adelie   40.3
+## 99     Adelie   33.1
+## 100    Adelie   43.2
+## 101    Adelie   35.0
+## 102    Adelie   41.0
+## 103    Adelie   37.7
+## 104    Adelie   37.8
+## 105    Adelie   37.9
+## 106    Adelie   39.7
+## 107    Adelie   38.6
+## 108    Adelie   38.2
+## 109    Adelie   38.1
+## 110    Adelie   43.2
+## 111    Adelie   38.1
+## 112    Adelie   45.6
+## 113    Adelie   39.7
+## 114    Adelie   42.2
+## 115    Adelie   39.6
+## 116    Adelie   42.7
+## 117    Adelie   38.6
+## 118    Adelie   37.3
+## 119    Adelie   35.7
+## 120    Adelie   41.1
+## 121    Adelie   36.2
+## 122    Adelie   37.7
+## 123    Adelie   40.2
+## 124    Adelie   41.4
+## 125    Adelie   35.2
+## 126    Adelie   40.6
+## 127    Adelie   38.8
+## 128    Adelie   41.5
+## 129    Adelie   39.0
+## 130    Adelie   44.1
+## 131    Adelie   38.5
+## 132    Adelie   43.1
+## 133    Adelie   36.8
+## 134    Adelie   37.5
+## 135    Adelie   38.1
+## 136    Adelie   41.1
+## 137    Adelie   35.6
+## 138    Adelie   40.2
+## 139    Adelie   37.0
+## 140    Adelie   39.7
+## 141    Adelie   40.2
+## 142    Adelie   40.6
+## 143    Adelie   32.1
+## 144    Adelie   40.7
+## 145    Adelie   37.3
+## 146    Adelie   39.0
+## 147    Adelie   39.2
+## 148    Adelie   36.6
+## 149    Adelie   36.0
+## 150    Adelie   37.8
+## 151    Adelie   36.0
+## 152    Adelie   41.5
+## 153    Gentoo   46.1
+## 154    Gentoo   50.0
+## 155    Gentoo   48.7
+## 156    Gentoo   50.0
+## 157    Gentoo   47.6
+## 158    Gentoo   46.5
+## 159    Gentoo   45.4
+## 160    Gentoo   46.7
+## 161    Gentoo   43.3
+## 162    Gentoo   46.8
+## 163    Gentoo   40.9
+## 164    Gentoo   49.0
+## 165    Gentoo   45.5
+## 166    Gentoo   48.4
+## 167    Gentoo   45.8
+## 168    Gentoo   49.3
+## 169    Gentoo   42.0
+## 170    Gentoo   49.2
+## 171    Gentoo   46.2
+## 172    Gentoo   48.7
+## 173    Gentoo   50.2
+## 174    Gentoo   45.1
+## 175    Gentoo   46.5
+## 176    Gentoo   46.3
+## 177    Gentoo   42.9
+## 178    Gentoo   46.1
+## 179    Gentoo   44.5
+## 180    Gentoo   47.8
+## 181    Gentoo   48.2
+## 182    Gentoo   50.0
+## 183    Gentoo   47.3
+## 184    Gentoo   42.8
+## 185    Gentoo   45.1
+## 186    Gentoo   59.6
+## 187    Gentoo   49.1
+## 188    Gentoo   48.4
+## 189    Gentoo   42.6
+## 190    Gentoo   44.4
+## 191    Gentoo   44.0
+## 192    Gentoo   48.7
+## 193    Gentoo   42.7
+## 194    Gentoo   49.6
+## 195    Gentoo   45.3
+## 196    Gentoo   49.6
+## 197    Gentoo   50.5
+## 198    Gentoo   43.6
+## 199    Gentoo   45.5
+## 200    Gentoo   50.5
+## 201    Gentoo   44.9
+## 202    Gentoo   45.2
+## 203    Gentoo   46.6
+## 204    Gentoo   48.5
+## 205    Gentoo   45.1
+## 206    Gentoo   50.1
+## 207    Gentoo   46.5
+## 208    Gentoo   45.0
+## 209    Gentoo   43.8
+## 210    Gentoo   45.5
+## 211    Gentoo   43.2
+## 212    Gentoo   50.4
+## 213    Gentoo   45.3
+## 214    Gentoo   46.2
+## 215    Gentoo   45.7
+## 216    Gentoo   54.3
+## 217    Gentoo   45.8
+## 218    Gentoo   49.8
+## 219    Gentoo   46.2
+## 220    Gentoo   49.5
+## 221    Gentoo   43.5
+## 222    Gentoo   50.7
+## 223    Gentoo   47.7
+## 224    Gentoo   46.4
+## 225    Gentoo   48.2
+## 226    Gentoo   46.5
+## 227    Gentoo   46.4
+## 228    Gentoo   48.6
+## 229    Gentoo   47.5
+## 230    Gentoo   51.1
+## 231    Gentoo   45.2
+## 232    Gentoo   45.2
+## 233    Gentoo   49.1
+## 234    Gentoo   52.5
+## 235    Gentoo   47.4
+## 236    Gentoo   50.0
+## 237    Gentoo   44.9
+## 238    Gentoo   50.8
+## 239    Gentoo   43.4
+## 240    Gentoo   51.3
+## 241    Gentoo   47.5
+## 242    Gentoo   52.1
+## 243    Gentoo   47.5
+## 244    Gentoo   52.2
+## 245    Gentoo   45.5
+## 246    Gentoo   49.5
+## 247    Gentoo   44.5
+## 248    Gentoo   50.8
+## 249    Gentoo   49.4
+## 250    Gentoo   46.9
+## 251    Gentoo   48.4
+## 252    Gentoo   51.1
+## 253    Gentoo   48.5
+## 254    Gentoo   55.9
+## 255    Gentoo   47.2
+## 256    Gentoo   49.1
+## 257    Gentoo   47.3
+## 258    Gentoo   46.8
+## 259    Gentoo   41.7
+## 260    Gentoo   53.4
+## 261    Gentoo   43.3
+## 262    Gentoo   48.1
+## 263    Gentoo   50.5
+## 264    Gentoo   49.8
+## 265    Gentoo   43.5
+## 266    Gentoo   51.5
+## 267    Gentoo   46.2
+## 268    Gentoo   55.1
+## 269    Gentoo   44.5
+## 270    Gentoo   48.8
+## 271    Gentoo   47.2
+## 272    Gentoo     NA
+## 273    Gentoo   46.8
+## 274    Gentoo   50.4
+## 275    Gentoo   45.2
+## 276    Gentoo   49.9
+## 277 Chinstrap   46.5
+## 278 Chinstrap   50.0
+## 279 Chinstrap   51.3
+## 280 Chinstrap   45.4
+## 281 Chinstrap   52.7
+## 282 Chinstrap   45.2
+## 283 Chinstrap   46.1
+## 284 Chinstrap   51.3
+## 285 Chinstrap   46.0
+## 286 Chinstrap   51.3
+## 287 Chinstrap   46.6
+## 288 Chinstrap   51.7
+## 289 Chinstrap   47.0
+## 290 Chinstrap   52.0
+## 291 Chinstrap   45.9
+## 292 Chinstrap   50.5
+## 293 Chinstrap   50.3
+## 294 Chinstrap   58.0
+## 295 Chinstrap   46.4
+## 296 Chinstrap   49.2
+## 297 Chinstrap   42.4
+## 298 Chinstrap   48.5
+## 299 Chinstrap   43.2
+## 300 Chinstrap   50.6
+## 301 Chinstrap   46.7
+## 302 Chinstrap   52.0
+## 303 Chinstrap   50.5
+## 304 Chinstrap   49.5
+## 305 Chinstrap   46.4
+## 306 Chinstrap   52.8
+## 307 Chinstrap   40.9
+## 308 Chinstrap   54.2
+## 309 Chinstrap   42.5
+## 310 Chinstrap   51.0
+## 311 Chinstrap   49.7
+## 312 Chinstrap   47.5
+## 313 Chinstrap   47.6
+## 314 Chinstrap   52.0
+## 315 Chinstrap   46.9
+## 316 Chinstrap   53.5
+## 317 Chinstrap   49.0
+## 318 Chinstrap   46.2
+## 319 Chinstrap   50.9
+## 320 Chinstrap   45.5
+## 321 Chinstrap   50.9
+## 322 Chinstrap   50.8
+## 323 Chinstrap   50.1
+## 324 Chinstrap   49.0
+## 325 Chinstrap   51.5
+## 326 Chinstrap   49.8
+## 327 Chinstrap   48.1
+## 328 Chinstrap   51.4
+## 329 Chinstrap   45.7
+## 330 Chinstrap   50.7
+## 331 Chinstrap   42.5
+## 332 Chinstrap   52.2
+## 333 Chinstrap   45.2
+## 334 Chinstrap   49.3
+## 335 Chinstrap   50.2
+## 336 Chinstrap   45.6
+## 337 Chinstrap   51.9
+## 338 Chinstrap   46.8
+## 339 Chinstrap   45.7
+## 340 Chinstrap   55.8
+## 341 Chinstrap   43.5
+## 342 Chinstrap   49.6
+## 343 Chinstrap   50.8
+## 344 Chinstrap   50.2
+```
+]
+.pull-right[
+- pour sélectionner plusieurs variables 
+
+]
+---
+
+## Les fonctions dplyr : arrange
+- tri des observations suivant les valeurs des variables
+
+```
+##       species    island bill_l bill_d flip_l mass    sex year
+## 1      Gentoo    Biscoe   42.9   13.1    215 5000 female 2007
+## 2      Gentoo    Biscoe   46.1   13.2    211 4500 female 2007
+## 3      Gentoo    Biscoe   44.9   13.3    213 5100 female 2008
+## 4      Gentoo    Biscoe   43.3   13.4    209 4400 female 2007
+## 5      Gentoo    Biscoe   46.5   13.5    210 4550 female 2007
+## 6      Gentoo    Biscoe   42.0   13.5    210 4150 female 2007
+## 7      Gentoo    Biscoe   44.0   13.6    208 4350 female 2008
+## 8      Gentoo    Biscoe   47.2   13.7    214 4925 female 2009
+## 9      Gentoo    Biscoe   45.5   13.7    214 4650 female 2007
+## 10     Gentoo    Biscoe   45.3   13.7    210 4300 female 2008
+## 11     Gentoo    Biscoe   42.7   13.7    208 3950 female 2008
+## 12     Gentoo    Biscoe   42.6   13.7    213 4950 female 2008
+## 13     Gentoo    Biscoe   40.9   13.7    214 4650 female 2007
+## 14     Gentoo    Biscoe   47.3   13.8    216 4725   &lt;NA&gt; 2009
+## 15     Gentoo    Biscoe   45.3   13.8    208 4200 female 2008
+## 16     Gentoo    Biscoe   45.2   13.8    215 4750 female 2008
+## 17     Gentoo    Biscoe   44.9   13.8    212 4750 female 2009
+## 18     Gentoo    Biscoe   45.7   13.9    214 4400 female 2008
+## 19     Gentoo    Biscoe   45.5   13.9    210 4200 female 2008
+## 20     Gentoo    Biscoe   43.8   13.9    208 4300 female 2008
+## 21     Gentoo    Biscoe   43.6   13.9    217 4900 female 2008
+## 22     Gentoo    Biscoe   47.5   14.0    212 4875 female 2009
+## 23     Gentoo    Biscoe   43.3   14.0    208 4575 female 2009
+## 24     Gentoo    Biscoe   48.7   14.1    210 4450 female 2007
+## 25     Gentoo    Biscoe   48.5   14.1    220 5300   male 2008
+## 26     Gentoo    Biscoe   46.2   14.1    217 4375 female 2009
+## 27     Gentoo    Biscoe   51.3   14.2    218 5300   male 2009
+## 28     Gentoo    Biscoe   47.5   14.2    209 4600 female 2008
+## 29     Gentoo    Biscoe   46.6   14.2    210 4850 female 2008
+## 30     Gentoo    Biscoe   45.8   14.2    219 4700 female 2008
+## 31     Gentoo    Biscoe   43.5   14.2    220 4700 female 2008
+## 32     Gentoo    Biscoe   42.8   14.2    209 4700 female 2007
+## 33     Gentoo    Biscoe   50.2   14.3    218 5700   male 2007
+## 34     Gentoo    Biscoe   48.2   14.3    210 4600 female 2007
+## 35     Gentoo    Biscoe   46.8   14.3    215 4850 female 2009
+## 36     Gentoo    Biscoe   44.5   14.3    216 4100   &lt;NA&gt; 2007
+## 37     Gentoo    Biscoe   48.4   14.4    203 4625 female 2009
+## 38     Gentoo    Biscoe   46.5   14.4    217 4900 female 2008
+## 39     Gentoo    Biscoe   46.2   14.4    214 4650   &lt;NA&gt; 2008
+## 40     Gentoo    Biscoe   45.1   14.4    210 4400 female 2008
+## 41     Gentoo    Biscoe   43.4   14.4    218 4600 female 2009
+## 42     Gentoo    Biscoe   49.1   14.5    212 4625 female 2009
+## 43     Gentoo    Biscoe   47.6   14.5    215 5400   male 2007
+## 44     Gentoo    Biscoe   46.5   14.5    213 4400 female 2007
+## 45     Gentoo    Biscoe   46.2   14.5    209 4800 female 2007
+## 46     Gentoo    Biscoe   45.5   14.5    212 4750 female 2009
+## 47     Gentoo    Biscoe   45.1   14.5    215 5000 female 2007
+## 48     Gentoo    Biscoe   45.1   14.5    207 5050 female 2007
+## 49     Gentoo    Biscoe   43.2   14.5    208 4450 female 2008
+## 50     Gentoo    Biscoe   48.4   14.6    213 5850   male 2007
+## 51     Gentoo    Biscoe   47.4   14.6    212 4725 female 2009
+## 52     Gentoo    Biscoe   46.9   14.6    222 4875 female 2009
+## 53     Gentoo    Biscoe   45.8   14.6    210 4200 female 2007
+## 54     Gentoo    Biscoe   45.4   14.6    211 4800 female 2007
+## 55     Gentoo    Biscoe   44.5   14.7    214 4850 female 2009
+## 56     Gentoo    Biscoe   41.7   14.7    210 4700 female 2009
+## 57     Gentoo    Biscoe   49.1   14.8    220 5150 female 2008
+## 58     Gentoo    Biscoe   46.5   14.8    217 5200 female 2008
+## 59     Gentoo    Biscoe   45.2   14.8    212 5200 female 2009
+## 60     Gentoo    Biscoe   46.2   14.9    221 5300   male 2008
+## 61     Gentoo    Biscoe   50.7   15.0    223 5550   male 2008
+## 62     Gentoo    Biscoe   50.1   15.0    225 5000   male 2008
+## 63     Gentoo    Biscoe   49.6   15.0    216 4750   male 2008
+## 64     Gentoo    Biscoe   49.1   15.0    228 5500   male 2009
+## 65     Gentoo    Biscoe   48.5   15.0    219 4850 female 2009
+## 66     Gentoo    Biscoe   47.8   15.0    215 5650   male 2007
+## 67     Gentoo    Biscoe   47.7   15.0    216 4750 female 2008
+## 68     Gentoo    Biscoe   47.5   15.0    218 4950 female 2009
+## 69     Gentoo    Biscoe   46.4   15.0    216 4700 female 2008
+## 70     Gentoo    Biscoe   45.5   15.0    220 5000   male 2008
+## 71     Gentoo    Biscoe   48.7   15.1    222 5350   male 2007
+## 72     Gentoo    Biscoe   48.1   15.1    209 5500   male 2009
+## 73     Gentoo    Biscoe   46.1   15.1    215 5100   male 2007
+## 74     Gentoo    Biscoe   50.5   15.2    216 5000 female 2009
+## 75     Gentoo    Biscoe   50.0   15.2    218 5700   male 2007
+## 76     Gentoo    Biscoe   49.2   15.2    221 6300   male 2007
+## 77     Gentoo    Biscoe   43.5   15.2    213 4650 female 2009
+## 78     Gentoo    Biscoe   50.4   15.3    224 5550   male 2008
+## 79     Gentoo    Biscoe   50.0   15.3    220 5550   male 2007
+## 80     Gentoo    Biscoe   47.3   15.3    222 5250   male 2007
+## 81     Gentoo    Biscoe   46.7   15.3    219 5200   male 2007
+## 82     Gentoo    Biscoe   46.8   15.4    215 5150   male 2007
+## 83     Gentoo    Biscoe   45.0   15.4    220 5050   male 2008
+## 84     Gentoo    Biscoe   47.2   15.5    215 4975 female 2009
+## 85     Adelie     Dream   32.1   15.5    188 3050 female 2009
+## 86     Gentoo    Biscoe   52.5   15.6    221 5450   male 2009
+## 87     Gentoo    Biscoe   48.2   15.6    221 5100   male 2008
+## 88     Gentoo    Biscoe   46.4   15.6    221 5000   male 2008
+## 89     Gentoo    Biscoe   54.3   15.7    231 5650   male 2008
+## 90     Gentoo    Biscoe   50.8   15.7    226 5200   male 2009
+## 91     Gentoo    Biscoe   50.4   15.7    222 5750   male 2009
+## 92     Gentoo    Biscoe   49.3   15.7    217 5850   male 2007
+## 93     Gentoo    Biscoe   48.7   15.7    208 5350   male 2008
+## 94     Gentoo    Biscoe   44.5   15.7    217 4875   &lt;NA&gt; 2009
+## 95     Gentoo    Biscoe   53.4   15.8    219 5500   male 2009
+## 96     Gentoo    Biscoe   49.4   15.8    216 4925   male 2009
+## 97     Gentoo    Biscoe   46.3   15.8    215 5050   male 2007
+## 98     Gentoo    Biscoe   45.2   15.8    215 5300   male 2008
+## 99     Gentoo    Biscoe   50.5   15.9    222 5550   male 2008
+## 100    Gentoo    Biscoe   50.5   15.9    225 5400   male 2008
+## 101    Gentoo    Biscoe   50.0   15.9    224 5350   male 2009
+## 102    Gentoo    Biscoe   49.8   15.9    229 5950   male 2009
+## 103    Adelie Torgersen   35.2   15.9    186 3050 female 2009
+## 104    Gentoo    Biscoe   55.1   16.0    230 5850   male 2009
+## 105    Gentoo    Biscoe   49.6   16.0    225 5700   male 2008
+## 106    Gentoo    Biscoe   48.6   16.0    230 5800   male 2008
+## 107    Adelie    Biscoe   37.7   16.0    183 3075 female 2009
+## 108    Gentoo    Biscoe   49.9   16.1    213 5400   male 2009
+## 109    Gentoo    Biscoe   49.5   16.1    224 5650   male 2009
+## 110    Gentoo    Biscoe   49.0   16.1    216 5550   male 2007
+## 111    Gentoo    Biscoe   46.8   16.1    215 5500   male 2009
+## 112    Adelie Torgersen   36.2   16.1    187 3550 female 2008
+## 113    Adelie     Dream   33.1   16.1    178 2900 female 2008
+## 114    Gentoo    Biscoe   49.5   16.2    229 5800   male 2008
+## 115    Gentoo    Biscoe   48.8   16.2    222 6000   male 2009
+## 116    Adelie    Biscoe   35.5   16.2    195 3350 female 2008
+## 117    Gentoo    Biscoe   51.5   16.3    230 5500   male 2009
+## 118    Gentoo    Biscoe   51.1   16.3    220 6000   male 2008
+## 119    Gentoo    Biscoe   50.0   16.3    230 5700   male 2007
+## 120    Gentoo    Biscoe   48.4   16.3    220 5400   male 2008
+## 121 Chinstrap     Dream   48.1   16.4    199 3325 female 2009
+## 122    Gentoo    Biscoe   45.2   16.4    223 5950   male 2008
+## 123    Gentoo    Biscoe   51.1   16.5    225 5250   male 2009
+## 124 Chinstrap     Dream   46.8   16.5    189 3650 female 2009
+## 125    Adelie    Biscoe   38.1   16.5    198 3825 female 2009
+## 126    Adelie     Dream   37.0   16.5    185 3400 female 2009
+## 127 Chinstrap     Dream   46.9   16.6    192 2700 female 2008
+## 128 Chinstrap     Dream   45.2   16.6    191 3250 female 2009
+## 129 Chinstrap     Dream   43.2   16.6    187 2900 female 2007
+## 130 Chinstrap     Dream   40.9   16.6    187 3200 female 2008
+## 131    Adelie    Biscoe   36.5   16.6    181 2850 female 2008
+## 132    Adelie Torgersen   35.9   16.6    190 3050 female 2008
+## 133 Chinstrap     Dream   42.5   16.7    187 3350 female 2008
+## 134    Adelie     Dream   39.5   16.7    178 3250 female 2007
+## 135    Gentoo    Biscoe   49.8   16.8    230 5700   male 2008
+## 136 Chinstrap     Dream   47.5   16.8    199 3900 female 2008
+## 137    Adelie Torgersen   40.9   16.8    191 3700 female 2008
+## 138    Adelie     Dream   37.3   16.8    192 3000 female 2009
+## 139    Adelie     Dream   37.0   16.9    185 3000 female 2007
+## 140    Adelie    Biscoe   35.7   16.9    185 3150 female 2008
+## 141    Gentoo    Biscoe   59.6   17.0    230 6050   male 2007
+## 142    Gentoo    Biscoe   55.9   17.0    228 5600   male 2009
+## 143    Gentoo    Biscoe   52.1   17.0    230 5550   male 2009
+## 144 Chinstrap     Dream   45.7   17.0    195 3650 female 2009
+## 145 Chinstrap     Dream   45.5   17.0    196 3500 female 2008
+## 146    Adelie     Dream   40.7   17.0    190 3725   male 2009
+## 147    Adelie Torgersen   40.2   17.0    176 3450 female 2009
+## 148    Adelie Torgersen   38.6   17.0    188 2900 female 2009
+## 149    Adelie    Biscoe   38.1   17.0    181 3175 female 2009
+## 150    Adelie    Biscoe   37.6   17.0    185 3600 female 2008
+## 151    Adelie     Dream   36.4   17.0    195 3325 female 2007
+## 152    Adelie Torgersen   35.7   17.0    189 3350 female 2009
+## 153    Gentoo    Biscoe   52.2   17.1    228 5400   male 2009
+## 154 Chinstrap     Dream   45.9   17.1    190 3575 female 2007
+## 155    Adelie     Dream   40.2   17.1    193 3400 female 2009
+## 156    Adelie Torgersen   39.0   17.1    191 3050 female 2009
+## 157    Adelie Torgersen   37.8   17.1    186 3300   &lt;NA&gt; 2007
+## 158    Adelie    Biscoe   36.4   17.1    184 2850 female 2008
+## 159    Adelie     Dream   36.0   17.1    187 3700 female 2009
+## 160    Adelie     Dream   34.0   17.1    185 3400 female 2008
+## 161    Adelie     Dream   40.6   17.2    187 3475   male 2009
+## 162    Adelie Torgersen   39.6   17.2    196 3550 female 2008
+## 163    Adelie    Biscoe   38.8   17.2    180 3800   male 2007
+## 164    Adelie    Biscoe   38.6   17.2    199 3750 female 2009
+## 165    Adelie Torgersen   36.2   17.2    187 3150 female 2009
+## 166    Adelie Torgersen   34.6   17.2    189 3200 female 2008
+## 167    Gentoo    Biscoe   50.8   17.3    228 5600   male 2009
+## 168 Chinstrap     Dream   49.8   17.3    198 3675 female 2009
+## 169 Chinstrap     Dream   47.0   17.3    185 3700 female 2007
+## 170 Chinstrap     Dream   45.7   17.3    193 3600 female 2009
+## 171    Gentoo    Biscoe   44.4   17.3    219 5250   male 2008
+## 172 Chinstrap     Dream   42.5   17.3    187 3350 female 2009
+## 173 Chinstrap     Dream   42.4   17.3    181 3600 female 2007
+## 174    Adelie Torgersen   37.8   17.3    180 3700   &lt;NA&gt; 2007
+## 175    Adelie     Dream   36.2   17.3    187 3300 female 2008
+## 176    Adelie Torgersen   39.5   17.4    186 3800 female 2007
+## 177 Chinstrap     Dream   48.5   17.5    191 3400   male 2007
+## 178 Chinstrap     Dream   46.2   17.5    187 3650 female 2008
+## 179    Adelie     Dream   41.1   17.5    190 3900   male 2009
+## 180    Adelie    Biscoe   39.0   17.5    186 3550 female 2008
+## 181    Adelie     Dream   35.6   17.5    191 3175 female 2009
+## 182    Adelie Torgersen   35.5   17.5    190 3700 female 2008
+## 183    Adelie Torgersen   42.9   17.6    196 4700   male 2008
+## 184    Adelie Torgersen   41.1   17.6    182 3200 female 2007
+## 185    Adelie Torgersen   38.8   17.6    191 3275 female 2009
+## 186    Adelie     Dream   38.1   17.6    187 3425 female 2009
+## 187    Adelie    Biscoe   39.7   17.7    193 3200 female 2009
+## 188    Adelie    Biscoe   39.6   17.7    186 3500 female 2008
+## 189 Chinstrap     Dream   58.0   17.8    181 3700 female 2007
+## 190 Chinstrap     Dream   46.6   17.8    193 3800 female 2007
+## 191 Chinstrap     Dream   46.4   17.8    191 3700 female 2008
+## 192 Chinstrap     Dream   45.2   17.8    198 3950 female 2007
+## 193    Adelie     Dream   39.5   17.8    188 3300 female 2007
+## 194    Adelie Torgersen   38.9   17.8    181 3625 female 2007
+## 195    Adelie     Dream   37.3   17.8    191 3350 female 2008
+## 196    Adelie Torgersen   36.6   17.8    185 3700 female 2007
+## 197    Adelie     Dream   36.0   17.8    195 3450 female 2009
+## 198 Chinstrap     Dream   50.9   17.9    196 3675 female 2009
+## 199 Chinstrap     Dream   50.1   17.9    190 3400 female 2009
+## 200 Chinstrap     Dream   46.7   17.9    195 3300 female 2007
+## 201 Chinstrap     Dream   46.5   17.9    192 3500 female 2007
+## 202    Adelie    Biscoe   40.5   17.9    187 3200 female 2007
+## 203    Adelie     Dream   39.7   17.9    193 4250   male 2009
+## 204    Adelie Torgersen   38.5   17.9    190 3325 female 2009
+## 205    Adelie     Dream   36.0   17.9    190 3450 female 2007
+## 206    Adelie    Biscoe   35.0   17.9    190 3450 female 2008
+## 207    Adelie    Biscoe   35.0   17.9    192 3725 female 2009
+## 208    Adelie Torgersen   44.1   18.0    210 4000   male 2009
+## 209    Adelie    Biscoe   41.6   18.0    192 3950   male 2008
+## 210    Adelie Torgersen   40.3   18.0    195 3250 female 2007
+## 211    Adelie     Dream   36.5   18.0    182 3150 female 2007
+## 212    Adelie     Dream   35.7   18.0    202 3550 female 2008
+## 213 Chinstrap     Dream   52.0   18.1    201 4050   male 2007
+## 214 Chinstrap     Dream   43.5   18.1    202 3400 female 2009
+## 215    Adelie     Dream   41.1   18.1    205 4300   male 2008
+## 216    Adelie     Dream   39.6   18.1    186 4450   male 2008
+## 217    Adelie    Biscoe   38.2   18.1    185 3950   male 2007
+## 218    Adelie     Dream   37.8   18.1    193 3750   male 2009
+## 219    Adelie     Dream   37.2   18.1    178 3900   male 2007
+## 220    Adelie    Biscoe   34.5   18.1    187 2900 female 2008
+## 221    Adelie Torgersen   34.1   18.1    193 3475   &lt;NA&gt; 2007
+## 222 Chinstrap     Dream   51.3   18.2    197 3750   male 2007
+## 223 Chinstrap     Dream   49.6   18.2    193 3775   male 2009
+## 224 Chinstrap     Dream   49.2   18.2    195 4400   male 2007
+## 225 Chinstrap     Dream   46.1   18.2    178 3250 female 2007
+## 226    Adelie    Biscoe   41.1   18.2    192 4050   male 2008
+## 227 Chinstrap     Dream   47.6   18.3    195 3850 female 2008
+## 228    Adelie    Biscoe   42.7   18.3    196 4075   male 2009
+## 229    Adelie Torgersen   41.5   18.3    195 4300   male 2009
+## 230    Adelie    Biscoe   37.8   18.3    174 3400 female 2007
+## 231 Chinstrap     Dream   50.5   18.4    200 3400 female 2008
+## 232    Adelie     Dream   40.8   18.4    195 3900   male 2007
+## 233    Adelie Torgersen   39.7   18.4    190 3900   male 2008
+## 234    Adelie     Dream   36.6   18.4    184 3475 female 2009
+## 235    Adelie Torgersen   34.4   18.4    184 3325 female 2007
+## 236 Chinstrap     Dream   50.8   18.5    201 4450   male 2009
+## 237    Adelie     Dream   43.2   18.5    192 4100   male 2008
+## 238    Adelie Torgersen   42.8   18.5    195 4250   male 2008
+## 239    Adelie     Dream   42.2   18.5    180 3550 female 2007
+## 240    Adelie     Dream   41.5   18.5    201 4000   male 2009
+## 241    Adelie Torgersen   41.4   18.5    202 3875   male 2009
+## 242    Adelie     Dream   40.3   18.5    196 4350   male 2008
+## 243    Adelie     Dream   37.5   18.5    199 4475   male 2009
+## 244    Adelie     Dream   36.8   18.5    193 3500 female 2009
+## 245    Adelie     Dream   36.0   18.5    186 3100 female 2007
+## 246 Chinstrap     Dream   49.7   18.6    195 3600   male 2008
+## 247 Chinstrap     Dream   46.4   18.6    190 3450 female 2007
+## 248    Adelie    Biscoe   41.4   18.6    191 3700   male 2008
+## 249    Adelie Torgersen   41.1   18.6    189 3325   male 2009
+## 250    Adelie    Biscoe   40.6   18.6    183 3550   male 2007
+## 251    Adelie     Dream   39.2   18.6    190 4250   male 2009
+## 252    Adelie     Dream   38.1   18.6    190 3700 female 2008
+## 253    Adelie    Biscoe   37.9   18.6    172 3150 female 2007
+## 254    Adelie    Biscoe   37.9   18.6    193 2925 female 2009
+## 255    Adelie     Dream   36.9   18.6    189 3500 female 2008
+## 256 Chinstrap     Dream   51.5   18.7    187 3250   male 2009
+## 257 Chinstrap     Dream   50.2   18.7    198 3775 female 2009
+## 258 Chinstrap     Dream   45.4   18.7    188 3525 female 2007
+## 259    Adelie Torgersen   39.1   18.7    181 3750   male 2007
+## 260    Adelie     Dream   39.0   18.7    185 3650   male 2009
+## 261    Adelie    Biscoe   37.7   18.7    180 3600   male 2007
+## 262 Chinstrap     Dream   52.2   18.8    197 3450   male 2009
+## 263 Chinstrap     Dream   51.0   18.8    203 4100   male 2008
+## 264 Chinstrap     Dream   50.2   18.8    202 3800   male 2009
+## 265    Adelie    Biscoe   40.6   18.8    193 3800   male 2008
+## 266    Adelie     Dream   39.6   18.8    190 4600   male 2007
+## 267    Adelie     Dream   38.9   18.8    190 3600 female 2008
+## 268    Adelie Torgersen   36.7   18.8    187 3800 female 2008
+## 269 Chinstrap     Dream   46.0   18.9    195 4150 female 2007
+## 270    Adelie Torgersen   45.8   18.9    197 4150   male 2008
+## 271    Adelie     Dream   40.9   18.9    184 3900   male 2007
+## 272    Adelie     Dream   40.8   18.9    208 4300   male 2008
+## 273    Adelie    Biscoe   40.5   18.9    180 3950   male 2007
+## 274    Adelie    Biscoe   40.1   18.9    188 4300   male 2008
+## 275    Adelie    Biscoe   39.7   18.9    184 3550   male 2009
+## 276    Adelie     Dream   37.5   18.9    179 2975   &lt;NA&gt; 2007
+## 277    Adelie    Biscoe   35.3   18.9    187 3800 female 2007
+## 278 Chinstrap     Dream   52.0   19.0    197 4150   male 2007
+## 279 Chinstrap     Dream   51.4   19.0    201 3950   male 2009
+## 280 Chinstrap     Dream   50.8   19.0    210 4100   male 2009
+## 281 Chinstrap     Dream   49.5   19.0    200 3800   male 2008
+## 282    Adelie    Biscoe   43.2   19.0    197 4775   male 2009
+## 283    Adelie     Dream   41.1   19.0    182 3425   male 2007
+## 284    Adelie Torgersen   40.6   19.0    199 4000   male 2009
+## 285    Adelie Torgersen   38.7   19.0    195 3450 female 2007
+## 286    Adelie Torgersen   33.5   19.0    190 3600 female 2008
+## 287 Chinstrap     Dream   50.9   19.1    196 3550   male 2008
+## 288    Adelie Torgersen   42.1   19.1    195 4000   male 2008
+## 289    Adelie    Biscoe   41.1   19.1    188 4100   male 2008
+## 290    Adelie     Dream   39.8   19.1    184 4650   male 2007
+## 291    Adelie    Biscoe   37.6   19.1    194 3750   male 2008
+## 292 Chinstrap     Dream   51.3   19.2    193 3650   male 2007
+## 293    Adelie Torgersen   43.1   19.2    197 3500   male 2009
+## 294    Adelie     Dream   38.3   19.2    189 3950   male 2008
+## 295    Adelie    Biscoe   35.9   19.2    189 3800 female 2007
+## 296    Adelie     Dream   37.6   19.3    181 3300 female 2007
+## 297    Adelie Torgersen   36.7   19.3    193 3450 female 2007
+## 298 Chinstrap     Dream   50.6   19.4    193 3800   male 2007
+## 299 Chinstrap     Dream   45.6   19.4    194 3525 female 2009
+## 300    Adelie Torgersen   41.8   19.4    198 4450   male 2008
+## 301    Adelie Torgersen   37.2   19.4    184 3900   male 2008
+## 302    Adelie Torgersen   35.1   19.4    193 4200   male 2008
+## 303 Chinstrap     Dream   51.9   19.5    206 3950   male 2009
+## 304 Chinstrap     Dream   50.0   19.5    196 3900   male 2007
+## 305 Chinstrap     Dream   49.0   19.5    210 3950   male 2008
+## 306    Adelie    Biscoe   42.2   19.5    197 4275   male 2009
+## 307    Adelie    Biscoe   42.0   19.5    200 4050   male 2008
+## 308    Adelie     Dream   36.3   19.5    190 3800   male 2008
+## 309 Chinstrap     Dream   50.5   19.6    201 4050   male 2007
+## 310 Chinstrap     Dream   49.0   19.6    212 4300   male 2009
+## 311    Adelie Torgersen   39.2   19.6    195 4675   male 2007
+## 312 Chinstrap     Dream   50.7   19.7    203 4050   male 2009
+## 313    Adelie     Dream   44.1   19.7    196 4400   male 2007
+## 314 Chinstrap     Dream   55.8   19.8    207 4000   male 2009
+## 315 Chinstrap     Dream   52.7   19.8    197 3725   male 2007
+## 316    Adelie Torgersen   37.7   19.8    198 3500   male 2009
+## 317 Chinstrap     Dream   53.5   19.9    205 4500   male 2008
+## 318 Chinstrap     Dream   51.3   19.9    198 3700   male 2007
+## 319 Chinstrap     Dream   49.3   19.9    203 4050   male 2009
+## 320 Chinstrap     Dream   52.8   20.0    205 4550   male 2008
+## 321 Chinstrap     Dream   50.3   20.0    197 3300   male 2007
+## 322    Adelie    Biscoe   41.0   20.0    203 4725   male 2009
+## 323    Adelie     Dream   38.8   20.0    190 3950   male 2007
+## 324    Adelie    Biscoe   38.2   20.0    190 3900   male 2009
+## 325    Adelie    Biscoe   37.8   20.0    190 4250   male 2009
+## 326    Adelie     Dream   40.2   20.1    200 3975   male 2009
+## 327    Adelie Torgersen   42.0   20.2    190 4250   &lt;NA&gt; 2007
+## 328 Chinstrap     Dream   51.7   20.3    194 3775   male 2007
+## 329    Adelie    Biscoe   45.6   20.3    191 4600   male 2009
+## 330    Adelie     Dream   41.3   20.3    194 3550   male 2008
+## 331    Adelie Torgersen   37.3   20.5    199 3775   male 2009
+## 332    Adelie Torgersen   39.3   20.6    190 3650   male 2007
+## 333 Chinstrap     Dream   52.0   20.7    210 4800   male 2008
+## 334    Adelie Torgersen   42.5   20.7    197 4500   male 2007
+## 335    Adelie    Biscoe   39.6   20.7    191 3900 female 2009
+## 336 Chinstrap     Dream   54.2   20.8    201 4300   male 2008
+## 337    Adelie    Biscoe   41.3   21.1    195 4400   male 2008
+## 338    Adelie     Dream   39.2   21.1    196 4150   male 2007
+## 339    Adelie Torgersen   34.6   21.1    198 4400   male 2007
+## 340    Adelie     Dream   42.3   21.2    191 4150   male 2007
+## 341    Adelie Torgersen   38.6   21.2    191 3800   male 2007
+## 342    Adelie Torgersen   46.0   21.5    194 4200   male 2007
+## 343    Adelie Torgersen     NA     NA     NA   NA   &lt;NA&gt; 2007
+## 344    Gentoo    Biscoe     NA     NA     NA   NA   &lt;NA&gt; 2009
+```
+
+---
+
+## Les fonctions dplyr : mutate
+- création d'une nouvelle variable qui remplace une existante ou qui vient s'ajouter au tableau
+
+```
+##       species    island bill_l bill_d flip_l mass    sex year bill_length_cm
+## 1      Adelie Torgersen   39.1   18.7    181 3750   male 2007           3.91
+## 2      Adelie Torgersen   39.5   17.4    186 3800 female 2007           3.95
+## 3      Adelie Torgersen   40.3   18.0    195 3250 female 2007           4.03
+## 4      Adelie Torgersen     NA     NA     NA   NA   &lt;NA&gt; 2007             NA
+## 5      Adelie Torgersen   36.7   19.3    193 3450 female 2007           3.67
+## 6      Adelie Torgersen   39.3   20.6    190 3650   male 2007           3.93
+## 7      Adelie Torgersen   38.9   17.8    181 3625 female 2007           3.89
+## 8      Adelie Torgersen   39.2   19.6    195 4675   male 2007           3.92
+## 9      Adelie Torgersen   34.1   18.1    193 3475   &lt;NA&gt; 2007           3.41
+## 10     Adelie Torgersen   42.0   20.2    190 4250   &lt;NA&gt; 2007           4.20
+## 11     Adelie Torgersen   37.8   17.1    186 3300   &lt;NA&gt; 2007           3.78
+## 12     Adelie Torgersen   37.8   17.3    180 3700   &lt;NA&gt; 2007           3.78
+## 13     Adelie Torgersen   41.1   17.6    182 3200 female 2007           4.11
+## 14     Adelie Torgersen   38.6   21.2    191 3800   male 2007           3.86
+## 15     Adelie Torgersen   34.6   21.1    198 4400   male 2007           3.46
+## 16     Adelie Torgersen   36.6   17.8    185 3700 female 2007           3.66
+## 17     Adelie Torgersen   38.7   19.0    195 3450 female 2007           3.87
+## 18     Adelie Torgersen   42.5   20.7    197 4500   male 2007           4.25
+## 19     Adelie Torgersen   34.4   18.4    184 3325 female 2007           3.44
+## 20     Adelie Torgersen   46.0   21.5    194 4200   male 2007           4.60
+## 21     Adelie    Biscoe   37.8   18.3    174 3400 female 2007           3.78
+## 22     Adelie    Biscoe   37.7   18.7    180 3600   male 2007           3.77
+## 23     Adelie    Biscoe   35.9   19.2    189 3800 female 2007           3.59
+## 24     Adelie    Biscoe   38.2   18.1    185 3950   male 2007           3.82
+## 25     Adelie    Biscoe   38.8   17.2    180 3800   male 2007           3.88
+## 26     Adelie    Biscoe   35.3   18.9    187 3800 female 2007           3.53
+## 27     Adelie    Biscoe   40.6   18.6    183 3550   male 2007           4.06
+## 28     Adelie    Biscoe   40.5   17.9    187 3200 female 2007           4.05
+## 29     Adelie    Biscoe   37.9   18.6    172 3150 female 2007           3.79
+## 30     Adelie    Biscoe   40.5   18.9    180 3950   male 2007           4.05
+## 31     Adelie     Dream   39.5   16.7    178 3250 female 2007           3.95
+## 32     Adelie     Dream   37.2   18.1    178 3900   male 2007           3.72
+## 33     Adelie     Dream   39.5   17.8    188 3300 female 2007           3.95
+## 34     Adelie     Dream   40.9   18.9    184 3900   male 2007           4.09
+## 35     Adelie     Dream   36.4   17.0    195 3325 female 2007           3.64
+## 36     Adelie     Dream   39.2   21.1    196 4150   male 2007           3.92
+## 37     Adelie     Dream   38.8   20.0    190 3950   male 2007           3.88
+## 38     Adelie     Dream   42.2   18.5    180 3550 female 2007           4.22
+## 39     Adelie     Dream   37.6   19.3    181 3300 female 2007           3.76
+## 40     Adelie     Dream   39.8   19.1    184 4650   male 2007           3.98
+## 41     Adelie     Dream   36.5   18.0    182 3150 female 2007           3.65
+## 42     Adelie     Dream   40.8   18.4    195 3900   male 2007           4.08
+## 43     Adelie     Dream   36.0   18.5    186 3100 female 2007           3.60
+## 44     Adelie     Dream   44.1   19.7    196 4400   male 2007           4.41
+## 45     Adelie     Dream   37.0   16.9    185 3000 female 2007           3.70
+## 46     Adelie     Dream   39.6   18.8    190 4600   male 2007           3.96
+## 47     Adelie     Dream   41.1   19.0    182 3425   male 2007           4.11
+## 48     Adelie     Dream   37.5   18.9    179 2975   &lt;NA&gt; 2007           3.75
+## 49     Adelie     Dream   36.0   17.9    190 3450 female 2007           3.60
+## 50     Adelie     Dream   42.3   21.2    191 4150   male 2007           4.23
+## 51     Adelie    Biscoe   39.6   17.7    186 3500 female 2008           3.96
+## 52     Adelie    Biscoe   40.1   18.9    188 4300   male 2008           4.01
+## 53     Adelie    Biscoe   35.0   17.9    190 3450 female 2008           3.50
+## 54     Adelie    Biscoe   42.0   19.5    200 4050   male 2008           4.20
+## 55     Adelie    Biscoe   34.5   18.1    187 2900 female 2008           3.45
+## 56     Adelie    Biscoe   41.4   18.6    191 3700   male 2008           4.14
+## 57     Adelie    Biscoe   39.0   17.5    186 3550 female 2008           3.90
+## 58     Adelie    Biscoe   40.6   18.8    193 3800   male 2008           4.06
+## 59     Adelie    Biscoe   36.5   16.6    181 2850 female 2008           3.65
+## 60     Adelie    Biscoe   37.6   19.1    194 3750   male 2008           3.76
+## 61     Adelie    Biscoe   35.7   16.9    185 3150 female 2008           3.57
+## 62     Adelie    Biscoe   41.3   21.1    195 4400   male 2008           4.13
+## 63     Adelie    Biscoe   37.6   17.0    185 3600 female 2008           3.76
+## 64     Adelie    Biscoe   41.1   18.2    192 4050   male 2008           4.11
+## 65     Adelie    Biscoe   36.4   17.1    184 2850 female 2008           3.64
+## 66     Adelie    Biscoe   41.6   18.0    192 3950   male 2008           4.16
+## 67     Adelie    Biscoe   35.5   16.2    195 3350 female 2008           3.55
+## 68     Adelie    Biscoe   41.1   19.1    188 4100   male 2008           4.11
+## 69     Adelie Torgersen   35.9   16.6    190 3050 female 2008           3.59
+## 70     Adelie Torgersen   41.8   19.4    198 4450   male 2008           4.18
+## 71     Adelie Torgersen   33.5   19.0    190 3600 female 2008           3.35
+## 72     Adelie Torgersen   39.7   18.4    190 3900   male 2008           3.97
+## 73     Adelie Torgersen   39.6   17.2    196 3550 female 2008           3.96
+## 74     Adelie Torgersen   45.8   18.9    197 4150   male 2008           4.58
+## 75     Adelie Torgersen   35.5   17.5    190 3700 female 2008           3.55
+## 76     Adelie Torgersen   42.8   18.5    195 4250   male 2008           4.28
+## 77     Adelie Torgersen   40.9   16.8    191 3700 female 2008           4.09
+## 78     Adelie Torgersen   37.2   19.4    184 3900   male 2008           3.72
+## 79     Adelie Torgersen   36.2   16.1    187 3550 female 2008           3.62
+## 80     Adelie Torgersen   42.1   19.1    195 4000   male 2008           4.21
+## 81     Adelie Torgersen   34.6   17.2    189 3200 female 2008           3.46
+## 82     Adelie Torgersen   42.9   17.6    196 4700   male 2008           4.29
+## 83     Adelie Torgersen   36.7   18.8    187 3800 female 2008           3.67
+## 84     Adelie Torgersen   35.1   19.4    193 4200   male 2008           3.51
+## 85     Adelie     Dream   37.3   17.8    191 3350 female 2008           3.73
+## 86     Adelie     Dream   41.3   20.3    194 3550   male 2008           4.13
+## 87     Adelie     Dream   36.3   19.5    190 3800   male 2008           3.63
+## 88     Adelie     Dream   36.9   18.6    189 3500 female 2008           3.69
+## 89     Adelie     Dream   38.3   19.2    189 3950   male 2008           3.83
+## 90     Adelie     Dream   38.9   18.8    190 3600 female 2008           3.89
+## 91     Adelie     Dream   35.7   18.0    202 3550 female 2008           3.57
+## 92     Adelie     Dream   41.1   18.1    205 4300   male 2008           4.11
+## 93     Adelie     Dream   34.0   17.1    185 3400 female 2008           3.40
+## 94     Adelie     Dream   39.6   18.1    186 4450   male 2008           3.96
+## 95     Adelie     Dream   36.2   17.3    187 3300 female 2008           3.62
+## 96     Adelie     Dream   40.8   18.9    208 4300   male 2008           4.08
+## 97     Adelie     Dream   38.1   18.6    190 3700 female 2008           3.81
+## 98     Adelie     Dream   40.3   18.5    196 4350   male 2008           4.03
+## 99     Adelie     Dream   33.1   16.1    178 2900 female 2008           3.31
+## 100    Adelie     Dream   43.2   18.5    192 4100   male 2008           4.32
+## 101    Adelie    Biscoe   35.0   17.9    192 3725 female 2009           3.50
+## 102    Adelie    Biscoe   41.0   20.0    203 4725   male 2009           4.10
+## 103    Adelie    Biscoe   37.7   16.0    183 3075 female 2009           3.77
+## 104    Adelie    Biscoe   37.8   20.0    190 4250   male 2009           3.78
+## 105    Adelie    Biscoe   37.9   18.6    193 2925 female 2009           3.79
+## 106    Adelie    Biscoe   39.7   18.9    184 3550   male 2009           3.97
+## 107    Adelie    Biscoe   38.6   17.2    199 3750 female 2009           3.86
+## 108    Adelie    Biscoe   38.2   20.0    190 3900   male 2009           3.82
+## 109    Adelie    Biscoe   38.1   17.0    181 3175 female 2009           3.81
+## 110    Adelie    Biscoe   43.2   19.0    197 4775   male 2009           4.32
+## 111    Adelie    Biscoe   38.1   16.5    198 3825 female 2009           3.81
+## 112    Adelie    Biscoe   45.6   20.3    191 4600   male 2009           4.56
+## 113    Adelie    Biscoe   39.7   17.7    193 3200 female 2009           3.97
+## 114    Adelie    Biscoe   42.2   19.5    197 4275   male 2009           4.22
+## 115    Adelie    Biscoe   39.6   20.7    191 3900 female 2009           3.96
+## 116    Adelie    Biscoe   42.7   18.3    196 4075   male 2009           4.27
+## 117    Adelie Torgersen   38.6   17.0    188 2900 female 2009           3.86
+## 118    Adelie Torgersen   37.3   20.5    199 3775   male 2009           3.73
+## 119    Adelie Torgersen   35.7   17.0    189 3350 female 2009           3.57
+## 120    Adelie Torgersen   41.1   18.6    189 3325   male 2009           4.11
+## 121    Adelie Torgersen   36.2   17.2    187 3150 female 2009           3.62
+## 122    Adelie Torgersen   37.7   19.8    198 3500   male 2009           3.77
+## 123    Adelie Torgersen   40.2   17.0    176 3450 female 2009           4.02
+## 124    Adelie Torgersen   41.4   18.5    202 3875   male 2009           4.14
+## 125    Adelie Torgersen   35.2   15.9    186 3050 female 2009           3.52
+## 126    Adelie Torgersen   40.6   19.0    199 4000   male 2009           4.06
+## 127    Adelie Torgersen   38.8   17.6    191 3275 female 2009           3.88
+## 128    Adelie Torgersen   41.5   18.3    195 4300   male 2009           4.15
+## 129    Adelie Torgersen   39.0   17.1    191 3050 female 2009           3.90
+## 130    Adelie Torgersen   44.1   18.0    210 4000   male 2009           4.41
+## 131    Adelie Torgersen   38.5   17.9    190 3325 female 2009           3.85
+## 132    Adelie Torgersen   43.1   19.2    197 3500   male 2009           4.31
+## 133    Adelie     Dream   36.8   18.5    193 3500 female 2009           3.68
+## 134    Adelie     Dream   37.5   18.5    199 4475   male 2009           3.75
+## 135    Adelie     Dream   38.1   17.6    187 3425 female 2009           3.81
+## 136    Adelie     Dream   41.1   17.5    190 3900   male 2009           4.11
+## 137    Adelie     Dream   35.6   17.5    191 3175 female 2009           3.56
+## 138    Adelie     Dream   40.2   20.1    200 3975   male 2009           4.02
+## 139    Adelie     Dream   37.0   16.5    185 3400 female 2009           3.70
+## 140    Adelie     Dream   39.7   17.9    193 4250   male 2009           3.97
+## 141    Adelie     Dream   40.2   17.1    193 3400 female 2009           4.02
+## 142    Adelie     Dream   40.6   17.2    187 3475   male 2009           4.06
+## 143    Adelie     Dream   32.1   15.5    188 3050 female 2009           3.21
+## 144    Adelie     Dream   40.7   17.0    190 3725   male 2009           4.07
+## 145    Adelie     Dream   37.3   16.8    192 3000 female 2009           3.73
+## 146    Adelie     Dream   39.0   18.7    185 3650   male 2009           3.90
+## 147    Adelie     Dream   39.2   18.6    190 4250   male 2009           3.92
+## 148    Adelie     Dream   36.6   18.4    184 3475 female 2009           3.66
+## 149    Adelie     Dream   36.0   17.8    195 3450 female 2009           3.60
+## 150    Adelie     Dream   37.8   18.1    193 3750   male 2009           3.78
+## 151    Adelie     Dream   36.0   17.1    187 3700 female 2009           3.60
+## 152    Adelie     Dream   41.5   18.5    201 4000   male 2009           4.15
+## 153    Gentoo    Biscoe   46.1   13.2    211 4500 female 2007           4.61
+## 154    Gentoo    Biscoe   50.0   16.3    230 5700   male 2007           5.00
+## 155    Gentoo    Biscoe   48.7   14.1    210 4450 female 2007           4.87
+## 156    Gentoo    Biscoe   50.0   15.2    218 5700   male 2007           5.00
+## 157    Gentoo    Biscoe   47.6   14.5    215 5400   male 2007           4.76
+## 158    Gentoo    Biscoe   46.5   13.5    210 4550 female 2007           4.65
+## 159    Gentoo    Biscoe   45.4   14.6    211 4800 female 2007           4.54
+## 160    Gentoo    Biscoe   46.7   15.3    219 5200   male 2007           4.67
+## 161    Gentoo    Biscoe   43.3   13.4    209 4400 female 2007           4.33
+## 162    Gentoo    Biscoe   46.8   15.4    215 5150   male 2007           4.68
+## 163    Gentoo    Biscoe   40.9   13.7    214 4650 female 2007           4.09
+## 164    Gentoo    Biscoe   49.0   16.1    216 5550   male 2007           4.90
+## 165    Gentoo    Biscoe   45.5   13.7    214 4650 female 2007           4.55
+## 166    Gentoo    Biscoe   48.4   14.6    213 5850   male 2007           4.84
+## 167    Gentoo    Biscoe   45.8   14.6    210 4200 female 2007           4.58
+## 168    Gentoo    Biscoe   49.3   15.7    217 5850   male 2007           4.93
+## 169    Gentoo    Biscoe   42.0   13.5    210 4150 female 2007           4.20
+## 170    Gentoo    Biscoe   49.2   15.2    221 6300   male 2007           4.92
+## 171    Gentoo    Biscoe   46.2   14.5    209 4800 female 2007           4.62
+## 172    Gentoo    Biscoe   48.7   15.1    222 5350   male 2007           4.87
+## 173    Gentoo    Biscoe   50.2   14.3    218 5700   male 2007           5.02
+## 174    Gentoo    Biscoe   45.1   14.5    215 5000 female 2007           4.51
+## 175    Gentoo    Biscoe   46.5   14.5    213 4400 female 2007           4.65
+## 176    Gentoo    Biscoe   46.3   15.8    215 5050   male 2007           4.63
+## 177    Gentoo    Biscoe   42.9   13.1    215 5000 female 2007           4.29
+## 178    Gentoo    Biscoe   46.1   15.1    215 5100   male 2007           4.61
+## 179    Gentoo    Biscoe   44.5   14.3    216 4100   &lt;NA&gt; 2007           4.45
+## 180    Gentoo    Biscoe   47.8   15.0    215 5650   male 2007           4.78
+## 181    Gentoo    Biscoe   48.2   14.3    210 4600 female 2007           4.82
+## 182    Gentoo    Biscoe   50.0   15.3    220 5550   male 2007           5.00
+## 183    Gentoo    Biscoe   47.3   15.3    222 5250   male 2007           4.73
+## 184    Gentoo    Biscoe   42.8   14.2    209 4700 female 2007           4.28
+## 185    Gentoo    Biscoe   45.1   14.5    207 5050 female 2007           4.51
+## 186    Gentoo    Biscoe   59.6   17.0    230 6050   male 2007           5.96
+## 187    Gentoo    Biscoe   49.1   14.8    220 5150 female 2008           4.91
+## 188    Gentoo    Biscoe   48.4   16.3    220 5400   male 2008           4.84
+## 189    Gentoo    Biscoe   42.6   13.7    213 4950 female 2008           4.26
+## 190    Gentoo    Biscoe   44.4   17.3    219 5250   male 2008           4.44
+## 191    Gentoo    Biscoe   44.0   13.6    208 4350 female 2008           4.40
+## 192    Gentoo    Biscoe   48.7   15.7    208 5350   male 2008           4.87
+## 193    Gentoo    Biscoe   42.7   13.7    208 3950 female 2008           4.27
+## 194    Gentoo    Biscoe   49.6   16.0    225 5700   male 2008           4.96
+## 195    Gentoo    Biscoe   45.3   13.7    210 4300 female 2008           4.53
+## 196    Gentoo    Biscoe   49.6   15.0    216 4750   male 2008           4.96
+## 197    Gentoo    Biscoe   50.5   15.9    222 5550   male 2008           5.05
+## 198    Gentoo    Biscoe   43.6   13.9    217 4900 female 2008           4.36
+## 199    Gentoo    Biscoe   45.5   13.9    210 4200 female 2008           4.55
+## 200    Gentoo    Biscoe   50.5   15.9    225 5400   male 2008           5.05
+## 201    Gentoo    Biscoe   44.9   13.3    213 5100 female 2008           4.49
+## 202    Gentoo    Biscoe   45.2   15.8    215 5300   male 2008           4.52
+## 203    Gentoo    Biscoe   46.6   14.2    210 4850 female 2008           4.66
+## 204    Gentoo    Biscoe   48.5   14.1    220 5300   male 2008           4.85
+## 205    Gentoo    Biscoe   45.1   14.4    210 4400 female 2008           4.51
+## 206    Gentoo    Biscoe   50.1   15.0    225 5000   male 2008           5.01
+## 207    Gentoo    Biscoe   46.5   14.4    217 4900 female 2008           4.65
+## 208    Gentoo    Biscoe   45.0   15.4    220 5050   male 2008           4.50
+## 209    Gentoo    Biscoe   43.8   13.9    208 4300 female 2008           4.38
+## 210    Gentoo    Biscoe   45.5   15.0    220 5000   male 2008           4.55
+## 211    Gentoo    Biscoe   43.2   14.5    208 4450 female 2008           4.32
+## 212    Gentoo    Biscoe   50.4   15.3    224 5550   male 2008           5.04
+## 213    Gentoo    Biscoe   45.3   13.8    208 4200 female 2008           4.53
+## 214    Gentoo    Biscoe   46.2   14.9    221 5300   male 2008           4.62
+## 215    Gentoo    Biscoe   45.7   13.9    214 4400 female 2008           4.57
+## 216    Gentoo    Biscoe   54.3   15.7    231 5650   male 2008           5.43
+## 217    Gentoo    Biscoe   45.8   14.2    219 4700 female 2008           4.58
+## 218    Gentoo    Biscoe   49.8   16.8    230 5700   male 2008           4.98
+## 219    Gentoo    Biscoe   46.2   14.4    214 4650   &lt;NA&gt; 2008           4.62
+## 220    Gentoo    Biscoe   49.5   16.2    229 5800   male 2008           4.95
+## 221    Gentoo    Biscoe   43.5   14.2    220 4700 female 2008           4.35
+## 222    Gentoo    Biscoe   50.7   15.0    223 5550   male 2008           5.07
+## 223    Gentoo    Biscoe   47.7   15.0    216 4750 female 2008           4.77
+## 224    Gentoo    Biscoe   46.4   15.6    221 5000   male 2008           4.64
+## 225    Gentoo    Biscoe   48.2   15.6    221 5100   male 2008           4.82
+## 226    Gentoo    Biscoe   46.5   14.8    217 5200 female 2008           4.65
+## 227    Gentoo    Biscoe   46.4   15.0    216 4700 female 2008           4.64
+## 228    Gentoo    Biscoe   48.6   16.0    230 5800   male 2008           4.86
+## 229    Gentoo    Biscoe   47.5   14.2    209 4600 female 2008           4.75
+## 230    Gentoo    Biscoe   51.1   16.3    220 6000   male 2008           5.11
+## 231    Gentoo    Biscoe   45.2   13.8    215 4750 female 2008           4.52
+## 232    Gentoo    Biscoe   45.2   16.4    223 5950   male 2008           4.52
+## 233    Gentoo    Biscoe   49.1   14.5    212 4625 female 2009           4.91
+## 234    Gentoo    Biscoe   52.5   15.6    221 5450   male 2009           5.25
+## 235    Gentoo    Biscoe   47.4   14.6    212 4725 female 2009           4.74
+## 236    Gentoo    Biscoe   50.0   15.9    224 5350   male 2009           5.00
+## 237    Gentoo    Biscoe   44.9   13.8    212 4750 female 2009           4.49
+## 238    Gentoo    Biscoe   50.8   17.3    228 5600   male 2009           5.08
+## 239    Gentoo    Biscoe   43.4   14.4    218 4600 female 2009           4.34
+## 240    Gentoo    Biscoe   51.3   14.2    218 5300   male 2009           5.13
+## 241    Gentoo    Biscoe   47.5   14.0    212 4875 female 2009           4.75
+## 242    Gentoo    Biscoe   52.1   17.0    230 5550   male 2009           5.21
+## 243    Gentoo    Biscoe   47.5   15.0    218 4950 female 2009           4.75
+## 244    Gentoo    Biscoe   52.2   17.1    228 5400   male 2009           5.22
+## 245    Gentoo    Biscoe   45.5   14.5    212 4750 female 2009           4.55
+## 246    Gentoo    Biscoe   49.5   16.1    224 5650   male 2009           4.95
+## 247    Gentoo    Biscoe   44.5   14.7    214 4850 female 2009           4.45
+## 248    Gentoo    Biscoe   50.8   15.7    226 5200   male 2009           5.08
+## 249    Gentoo    Biscoe   49.4   15.8    216 4925   male 2009           4.94
+## 250    Gentoo    Biscoe   46.9   14.6    222 4875 female 2009           4.69
+## 251    Gentoo    Biscoe   48.4   14.4    203 4625 female 2009           4.84
+## 252    Gentoo    Biscoe   51.1   16.5    225 5250   male 2009           5.11
+## 253    Gentoo    Biscoe   48.5   15.0    219 4850 female 2009           4.85
+## 254    Gentoo    Biscoe   55.9   17.0    228 5600   male 2009           5.59
+## 255    Gentoo    Biscoe   47.2   15.5    215 4975 female 2009           4.72
+## 256    Gentoo    Biscoe   49.1   15.0    228 5500   male 2009           4.91
+## 257    Gentoo    Biscoe   47.3   13.8    216 4725   &lt;NA&gt; 2009           4.73
+## 258    Gentoo    Biscoe   46.8   16.1    215 5500   male 2009           4.68
+## 259    Gentoo    Biscoe   41.7   14.7    210 4700 female 2009           4.17
+## 260    Gentoo    Biscoe   53.4   15.8    219 5500   male 2009           5.34
+## 261    Gentoo    Biscoe   43.3   14.0    208 4575 female 2009           4.33
+## 262    Gentoo    Biscoe   48.1   15.1    209 5500   male 2009           4.81
+## 263    Gentoo    Biscoe   50.5   15.2    216 5000 female 2009           5.05
+## 264    Gentoo    Biscoe   49.8   15.9    229 5950   male 2009           4.98
+## 265    Gentoo    Biscoe   43.5   15.2    213 4650 female 2009           4.35
+## 266    Gentoo    Biscoe   51.5   16.3    230 5500   male 2009           5.15
+## 267    Gentoo    Biscoe   46.2   14.1    217 4375 female 2009           4.62
+## 268    Gentoo    Biscoe   55.1   16.0    230 5850   male 2009           5.51
+## 269    Gentoo    Biscoe   44.5   15.7    217 4875   &lt;NA&gt; 2009           4.45
+## 270    Gentoo    Biscoe   48.8   16.2    222 6000   male 2009           4.88
+## 271    Gentoo    Biscoe   47.2   13.7    214 4925 female 2009           4.72
+## 272    Gentoo    Biscoe     NA     NA     NA   NA   &lt;NA&gt; 2009             NA
+## 273    Gentoo    Biscoe   46.8   14.3    215 4850 female 2009           4.68
+## 274    Gentoo    Biscoe   50.4   15.7    222 5750   male 2009           5.04
+## 275    Gentoo    Biscoe   45.2   14.8    212 5200 female 2009           4.52
+## 276    Gentoo    Biscoe   49.9   16.1    213 5400   male 2009           4.99
+## 277 Chinstrap     Dream   46.5   17.9    192 3500 female 2007           4.65
+## 278 Chinstrap     Dream   50.0   19.5    196 3900   male 2007           5.00
+## 279 Chinstrap     Dream   51.3   19.2    193 3650   male 2007           5.13
+## 280 Chinstrap     Dream   45.4   18.7    188 3525 female 2007           4.54
+## 281 Chinstrap     Dream   52.7   19.8    197 3725   male 2007           5.27
+## 282 Chinstrap     Dream   45.2   17.8    198 3950 female 2007           4.52
+## 283 Chinstrap     Dream   46.1   18.2    178 3250 female 2007           4.61
+## 284 Chinstrap     Dream   51.3   18.2    197 3750   male 2007           5.13
+## 285 Chinstrap     Dream   46.0   18.9    195 4150 female 2007           4.60
+## 286 Chinstrap     Dream   51.3   19.9    198 3700   male 2007           5.13
+## 287 Chinstrap     Dream   46.6   17.8    193 3800 female 2007           4.66
+## 288 Chinstrap     Dream   51.7   20.3    194 3775   male 2007           5.17
+## 289 Chinstrap     Dream   47.0   17.3    185 3700 female 2007           4.70
+## 290 Chinstrap     Dream   52.0   18.1    201 4050   male 2007           5.20
+## 291 Chinstrap     Dream   45.9   17.1    190 3575 female 2007           4.59
+## 292 Chinstrap     Dream   50.5   19.6    201 4050   male 2007           5.05
+## 293 Chinstrap     Dream   50.3   20.0    197 3300   male 2007           5.03
+## 294 Chinstrap     Dream   58.0   17.8    181 3700 female 2007           5.80
+## 295 Chinstrap     Dream   46.4   18.6    190 3450 female 2007           4.64
+## 296 Chinstrap     Dream   49.2   18.2    195 4400   male 2007           4.92
+## 297 Chinstrap     Dream   42.4   17.3    181 3600 female 2007           4.24
+## 298 Chinstrap     Dream   48.5   17.5    191 3400   male 2007           4.85
+## 299 Chinstrap     Dream   43.2   16.6    187 2900 female 2007           4.32
+## 300 Chinstrap     Dream   50.6   19.4    193 3800   male 2007           5.06
+## 301 Chinstrap     Dream   46.7   17.9    195 3300 female 2007           4.67
+## 302 Chinstrap     Dream   52.0   19.0    197 4150   male 2007           5.20
+## 303 Chinstrap     Dream   50.5   18.4    200 3400 female 2008           5.05
+## 304 Chinstrap     Dream   49.5   19.0    200 3800   male 2008           4.95
+## 305 Chinstrap     Dream   46.4   17.8    191 3700 female 2008           4.64
+## 306 Chinstrap     Dream   52.8   20.0    205 4550   male 2008           5.28
+## 307 Chinstrap     Dream   40.9   16.6    187 3200 female 2008           4.09
+## 308 Chinstrap     Dream   54.2   20.8    201 4300   male 2008           5.42
+## 309 Chinstrap     Dream   42.5   16.7    187 3350 female 2008           4.25
+## 310 Chinstrap     Dream   51.0   18.8    203 4100   male 2008           5.10
+## 311 Chinstrap     Dream   49.7   18.6    195 3600   male 2008           4.97
+## 312 Chinstrap     Dream   47.5   16.8    199 3900 female 2008           4.75
+## 313 Chinstrap     Dream   47.6   18.3    195 3850 female 2008           4.76
+## 314 Chinstrap     Dream   52.0   20.7    210 4800   male 2008           5.20
+## 315 Chinstrap     Dream   46.9   16.6    192 2700 female 2008           4.69
+## 316 Chinstrap     Dream   53.5   19.9    205 4500   male 2008           5.35
+## 317 Chinstrap     Dream   49.0   19.5    210 3950   male 2008           4.90
+## 318 Chinstrap     Dream   46.2   17.5    187 3650 female 2008           4.62
+## 319 Chinstrap     Dream   50.9   19.1    196 3550   male 2008           5.09
+## 320 Chinstrap     Dream   45.5   17.0    196 3500 female 2008           4.55
+## 321 Chinstrap     Dream   50.9   17.9    196 3675 female 2009           5.09
+## 322 Chinstrap     Dream   50.8   18.5    201 4450   male 2009           5.08
+## 323 Chinstrap     Dream   50.1   17.9    190 3400 female 2009           5.01
+## 324 Chinstrap     Dream   49.0   19.6    212 4300   male 2009           4.90
+## 325 Chinstrap     Dream   51.5   18.7    187 3250   male 2009           5.15
+## 326 Chinstrap     Dream   49.8   17.3    198 3675 female 2009           4.98
+## 327 Chinstrap     Dream   48.1   16.4    199 3325 female 2009           4.81
+## 328 Chinstrap     Dream   51.4   19.0    201 3950   male 2009           5.14
+## 329 Chinstrap     Dream   45.7   17.3    193 3600 female 2009           4.57
+## 330 Chinstrap     Dream   50.7   19.7    203 4050   male 2009           5.07
+## 331 Chinstrap     Dream   42.5   17.3    187 3350 female 2009           4.25
+## 332 Chinstrap     Dream   52.2   18.8    197 3450   male 2009           5.22
+## 333 Chinstrap     Dream   45.2   16.6    191 3250 female 2009           4.52
+## 334 Chinstrap     Dream   49.3   19.9    203 4050   male 2009           4.93
+## 335 Chinstrap     Dream   50.2   18.8    202 3800   male 2009           5.02
+## 336 Chinstrap     Dream   45.6   19.4    194 3525 female 2009           4.56
+## 337 Chinstrap     Dream   51.9   19.5    206 3950   male 2009           5.19
+## 338 Chinstrap     Dream   46.8   16.5    189 3650 female 2009           4.68
+## 339 Chinstrap     Dream   45.7   17.0    195 3650 female 2009           4.57
+## 340 Chinstrap     Dream   55.8   19.8    207 4000   male 2009           5.58
+## 341 Chinstrap     Dream   43.5   18.1    202 3400 female 2009           4.35
+## 342 Chinstrap     Dream   49.6   18.2    193 3775   male 2009           4.96
+## 343 Chinstrap     Dream   50.8   19.0    210 4100   male 2009           5.08
+## 344 Chinstrap     Dream   50.2   18.7    198 3775 female 2009           5.02
+##     Bill_length_cm
+## 1             3.91
+## 2             3.95
+## 3             4.03
+## 4               NA
+## 5             3.67
+## 6             3.93
+## 7             3.89
+## 8             3.92
+## 9             3.41
+## 10            4.20
+## 11            3.78
+## 12            3.78
+## 13            4.11
+## 14            3.86
+## 15            3.46
+## 16            3.66
+## 17            3.87
+## 18            4.25
+## 19            3.44
+## 20            4.60
+## 21            3.78
+## 22            3.77
+## 23            3.59
+## 24            3.82
+## 25            3.88
+## 26            3.53
+## 27            4.06
+## 28            4.05
+## 29            3.79
+## 30            4.05
+## 31            3.95
+## 32            3.72
+## 33            3.95
+## 34            4.09
+## 35            3.64
+## 36            3.92
+## 37            3.88
+## 38            4.22
+## 39            3.76
+## 40            3.98
+## 41            3.65
+## 42            4.08
+## 43            3.60
+## 44            4.41
+## 45            3.70
+## 46            3.96
+## 47            4.11
+## 48            3.75
+## 49            3.60
+## 50            4.23
+## 51            3.96
+## 52            4.01
+## 53            3.50
+## 54            4.20
+## 55            3.45
+## 56            4.14
+## 57            3.90
+## 58            4.06
+## 59            3.65
+## 60            3.76
+## 61            3.57
+## 62            4.13
+## 63            3.76
+## 64            4.11
+## 65            3.64
+## 66            4.16
+## 67            3.55
+## 68            4.11
+## 69            3.59
+## 70            4.18
+## 71            3.35
+## 72            3.97
+## 73            3.96
+## 74            4.58
+## 75            3.55
+## 76            4.28
+## 77            4.09
+## 78            3.72
+## 79            3.62
+## 80            4.21
+## 81            3.46
+## 82            4.29
+## 83            3.67
+## 84            3.51
+## 85            3.73
+## 86            4.13
+## 87            3.63
+## 88            3.69
+## 89            3.83
+## 90            3.89
+## 91            3.57
+## 92            4.11
+## 93            3.40
+## 94            3.96
+## 95            3.62
+## 96            4.08
+## 97            3.81
+## 98            4.03
+## 99            3.31
+## 100           4.32
+## 101           3.50
+## 102           4.10
+## 103           3.77
+## 104           3.78
+## 105           3.79
+## 106           3.97
+## 107           3.86
+## 108           3.82
+## 109           3.81
+## 110           4.32
+## 111           3.81
+## 112           4.56
+## 113           3.97
+## 114           4.22
+## 115           3.96
+## 116           4.27
+## 117           3.86
+## 118           3.73
+## 119           3.57
+## 120           4.11
+## 121           3.62
+## 122           3.77
+## 123           4.02
+## 124           4.14
+## 125           3.52
+## 126           4.06
+## 127           3.88
+## 128           4.15
+## 129           3.90
+## 130           4.41
+## 131           3.85
+## 132           4.31
+## 133           3.68
+## 134           3.75
+## 135           3.81
+## 136           4.11
+## 137           3.56
+## 138           4.02
+## 139           3.70
+## 140           3.97
+## 141           4.02
+## 142           4.06
+## 143           3.21
+## 144           4.07
+## 145           3.73
+## 146           3.90
+## 147           3.92
+## 148           3.66
+## 149           3.60
+## 150           3.78
+## 151           3.60
+## 152           4.15
+## 153           4.61
+## 154           5.00
+## 155           4.87
+## 156           5.00
+## 157           4.76
+## 158           4.65
+## 159           4.54
+## 160           4.67
+## 161           4.33
+## 162           4.68
+## 163           4.09
+## 164           4.90
+## 165           4.55
+## 166           4.84
+## 167           4.58
+## 168           4.93
+## 169           4.20
+## 170           4.92
+## 171           4.62
+## 172           4.87
+## 173           5.02
+## 174           4.51
+## 175           4.65
+## 176           4.63
+## 177           4.29
+## 178           4.61
+## 179           4.45
+## 180           4.78
+## 181           4.82
+## 182           5.00
+## 183           4.73
+## 184           4.28
+## 185           4.51
+## 186           5.96
+## 187           4.91
+## 188           4.84
+## 189           4.26
+## 190           4.44
+## 191           4.40
+## 192           4.87
+## 193           4.27
+## 194           4.96
+## 195           4.53
+## 196           4.96
+## 197           5.05
+## 198           4.36
+## 199           4.55
+## 200           5.05
+## 201           4.49
+## 202           4.52
+## 203           4.66
+## 204           4.85
+## 205           4.51
+## 206           5.01
+## 207           4.65
+## 208           4.50
+## 209           4.38
+## 210           4.55
+## 211           4.32
+## 212           5.04
+## 213           4.53
+## 214           4.62
+## 215           4.57
+## 216           5.43
+## 217           4.58
+## 218           4.98
+## 219           4.62
+## 220           4.95
+## 221           4.35
+## 222           5.07
+## 223           4.77
+## 224           4.64
+## 225           4.82
+## 226           4.65
+## 227           4.64
+## 228           4.86
+## 229           4.75
+## 230           5.11
+## 231           4.52
+## 232           4.52
+## 233           4.91
+## 234           5.25
+## 235           4.74
+## 236           5.00
+## 237           4.49
+## 238           5.08
+## 239           4.34
+## 240           5.13
+## 241           4.75
+## 242           5.21
+## 243           4.75
+## 244           5.22
+## 245           4.55
+## 246           4.95
+## 247           4.45
+## 248           5.08
+## 249           4.94
+## 250           4.69
+## 251           4.84
+## 252           5.11
+## 253           4.85
+## 254           5.59
+## 255           4.72
+## 256           4.91
+## 257           4.73
+## 258           4.68
+## 259           4.17
+## 260           5.34
+## 261           4.33
+## 262           4.81
+## 263           5.05
+## 264           4.98
+## 265           4.35
+## 266           5.15
+## 267           4.62
+## 268           5.51
+## 269           4.45
+## 270           4.88
+## 271           4.72
+## 272             NA
+## 273           4.68
+## 274           5.04
+## 275           4.52
+## 276           4.99
+## 277           4.65
+## 278           5.00
+## 279           5.13
+## 280           4.54
+## 281           5.27
+## 282           4.52
+## 283           4.61
+## 284           5.13
+## 285           4.60
+## 286           5.13
+## 287           4.66
+## 288           5.17
+## 289           4.70
+## 290           5.20
+## 291           4.59
+## 292           5.05
+## 293           5.03
+## 294           5.80
+## 295           4.64
+## 296           4.92
+## 297           4.24
+## 298           4.85
+## 299           4.32
+## 300           5.06
+## 301           4.67
+## 302           5.20
+## 303           5.05
+## 304           4.95
+## 305           4.64
+## 306           5.28
+## 307           4.09
+## 308           5.42
+## 309           4.25
+## 310           5.10
+## 311           4.97
+## 312           4.75
+## 313           4.76
+## 314           5.20
+## 315           4.69
+## 316           5.35
+## 317           4.90
+## 318           4.62
+## 319           5.09
+## 320           4.55
+## 321           5.09
+## 322           5.08
+## 323           5.01
+## 324           4.90
+## 325           5.15
+## 326           4.98
+## 327           4.81
+## 328           5.14
+## 329           4.57
+## 330           5.07
+## 331           4.25
+## 332           5.22
+## 333           4.52
+## 334           4.93
+## 335           5.02
+## 336           4.56
+## 337           5.19
+## 338           4.68
+## 339           4.57
+## 340           5.58
+## 341           4.35
+## 342           4.96
+## 343           5.08
+## 344           5.02
+```
+
+- on fera donc encore une fois attention à l'orthographe des variables 
+---
+
+## Composition de fonctions avec l'opérateur "pipe"
+- composition de gauche à droite pour plus de lisibilité pour vous comme pour une personne qui devrait relire votre code !  
+.pull-left[
+
+
+```
+##   bill_l bill_d flip_l mass year
+## 1   36.5   16.6    181 2850 2008
+## 2   36.4   17.1    184 2850 2008
+## 3   34.5   18.1    187 2900 2008
+```
+]
+.pull-right[
+
+```
+##   bill_l bill_d flip_l mass year
+## 1   36.5   16.6    181 2850 2008
+## 2   36.4   17.1    184 2850 2008
+## 3   34.5   18.1    187 2900 2008
+```
+]
+---
+
+## Les fonctions dplyr : group_by
+- regroupement des indvidus 
+
+```
+## # A tibble: 6 × 8
+## # Groups:   island [3]
+##   species island    bill_l bill_d flip_l  mass sex     year
+##   &lt;fct&gt;   &lt;fct&gt;      &lt;dbl&gt;  &lt;dbl&gt;  &lt;int&gt; &lt;int&gt; &lt;fct&gt;  &lt;int&gt;
+## 1 Adelie  Biscoe      37.8   18.3    174  3400 female  2007
+## 2 Adelie  Biscoe      37.7   18.7    180  3600 male    2007
+## 3 Adelie  Dream       39.5   16.7    178  3250 female  2007
+## 4 Adelie  Dream       37.2   18.1    178  3900 male    2007
+## 5 Adelie  Torgersen   39.1   18.7    181  3750 male    2007
+## 6 Adelie  Torgersen   39.5   17.4    186  3800 female  2007
+```
+
+---
+
+## Les fonctions dplyr : summarise
+- descriptions des données par sous-groupes
+
+```
+## # A tibble: 3 × 4
+##   island    long_moy long_max    nb
+##   &lt;fct&gt;        &lt;dbl&gt;    &lt;dbl&gt; &lt;int&gt;
+## 1 Biscoe        45.3     59.6   168
+## 2 Dream         44.2     58     124
+## 3 Torgersen     39.0     46      52
+```
+
+---
+
+## Les fonctions dplyr : count
+- autre façon de compter
+
+```
+##      island   species   n
+## 1    Biscoe    Gentoo 124
+## 2     Dream Chinstrap  68
+## 3     Dream    Adelie  56
+## 4 Torgersen    Adelie  52
+## 5    Biscoe    Adelie  44
+```
+- cela revient quasiment au même que
+
+
+---
+
+## Descriptions
+
+- grouper/dégrouper
+
+```
+## # A tibble: 5 × 4
+## # Groups:   island [3]
+##   island    species      nb pourcentage
+##   &lt;fct&gt;     &lt;fct&gt;     &lt;int&gt;       &lt;dbl&gt;
+## 1 Biscoe    Adelie       44        26.2
+## 2 Biscoe    Gentoo      124        73.8
+## 3 Dream     Adelie       56        45.2
+## 4 Dream     Chinstrap    68        54.8
+## 5 Torgersen Adelie       52       100
+```
+
+
+---
+## Descriptions conditionnelles
+- version conditionnelle des fonctions , pour par exemple appliquer la même opération sur toutes les variables d'un même type 
+
+```
+## # A tibble: 5 × 7
+## # Groups:   island [3]
+##   island    species   bill_l bill_d flip_l  mass  year
+##   &lt;fct&gt;     &lt;fct&gt;      &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 Biscoe    Adelie      39.0   18.4   189. 3710. 2008.
+## 2 Biscoe    Gentoo      47.5   15.0   217. 5076. 2008.
+## 3 Dream     Adelie      38.5   18.3   190. 3688. 2008 
+## 4 Dream     Chinstrap   48.8   18.4   196. 3733. 2008.
+## 5 Torgersen Adelie      39.0   18.4   191. 3706. 2008.
+```
+---
+## Descriptions multiples
+- application d'une même fonction à plusieurs variables données
+
+```
+##   bill_l_mean bill_d_mean flip_l_mean bill_l_median bill_d_median flip_l_median
+## 1    43.92193    17.15117    200.9152         44.45          17.3           197
+```
+- autres façons
+
+---
+## Manipulations d'un facteur
+- changement des niveaux d'un facteur donné
+
+
+```
+##       species    island bill_l
+## 1        Delo Torgersen   39.1
+## 2        Delo Torgersen   39.5
+## 3        Delo Torgersen   40.3
+## 4        Delo Torgersen     NA
+## 5        Delo Torgersen   36.7
+## 6        Delo Torgersen   39.3
+## 7        Delo Torgersen   38.9
+## 8        Delo Torgersen   39.2
+## 9        Delo Torgersen   34.1
+## 10       Delo Torgersen   42.0
+## 11       Delo Torgersen   37.8
+## 12       Delo Torgersen   37.8
+## 13       Delo Torgersen   41.1
+## 14       Delo Torgersen   38.6
+## 15       Delo Torgersen   34.6
+## 16       Delo Torgersen   36.6
+## 17       Delo Torgersen   38.7
+## 18       Delo Torgersen   42.5
+## 19       Delo Torgersen   34.4
+## 20       Delo Torgersen   46.0
+## 21       Delo    Biscoe   37.8
+## 22       Delo    Biscoe   37.7
+## 23       Delo    Biscoe   35.9
+## 24       Delo    Biscoe   38.2
+## 25       Delo    Biscoe   38.8
+## 26       Delo    Biscoe   35.3
+## 27       Delo    Biscoe   40.6
+## 28       Delo    Biscoe   40.5
+## 29       Delo    Biscoe   37.9
+## 30       Delo    Biscoe   40.5
+## 31       Delo     Dream   39.5
+## 32       Delo     Dream   37.2
+## 33       Delo     Dream   39.5
+## 34       Delo     Dream   40.9
+## 35       Delo     Dream   36.4
+## 36       Delo     Dream   39.2
+## 37       Delo     Dream   38.8
+## 38       Delo     Dream   42.2
+## 39       Delo     Dream   37.6
+## 40       Delo     Dream   39.8
+## 41       Delo     Dream   36.5
+## 42       Delo     Dream   40.8
+## 43       Delo     Dream   36.0
+## 44       Delo     Dream   44.1
+## 45       Delo     Dream   37.0
+## 46       Delo     Dream   39.6
+## 47       Delo     Dream   41.1
+## 48       Delo     Dream   37.5
+## 49       Delo     Dream   36.0
+## 50       Delo     Dream   42.3
+## 51       Delo    Biscoe   39.6
+## 52       Delo    Biscoe   40.1
+## 53       Delo    Biscoe   35.0
+## 54       Delo    Biscoe   42.0
+## 55       Delo    Biscoe   34.5
+## 56       Delo    Biscoe   41.4
+## 57       Delo    Biscoe   39.0
+## 58       Delo    Biscoe   40.6
+## 59       Delo    Biscoe   36.5
+## 60       Delo    Biscoe   37.6
+## 61       Delo    Biscoe   35.7
+## 62       Delo    Biscoe   41.3
+## 63       Delo    Biscoe   37.6
+## 64       Delo    Biscoe   41.1
+## 65       Delo    Biscoe   36.4
+## 66       Delo    Biscoe   41.6
+## 67       Delo    Biscoe   35.5
+## 68       Delo    Biscoe   41.1
+## 69       Delo Torgersen   35.9
+## 70       Delo Torgersen   41.8
+## 71       Delo Torgersen   33.5
+## 72       Delo Torgersen   39.7
+## 73       Delo Torgersen   39.6
+## 74       Delo Torgersen   45.8
+## 75       Delo Torgersen   35.5
+## 76       Delo Torgersen   42.8
+## 77       Delo Torgersen   40.9
+## 78       Delo Torgersen   37.2
+## 79       Delo Torgersen   36.2
+## 80       Delo Torgersen   42.1
+## 81       Delo Torgersen   34.6
+## 82       Delo Torgersen   42.9
+## 83       Delo Torgersen   36.7
+## 84       Delo Torgersen   35.1
+## 85       Delo     Dream   37.3
+## 86       Delo     Dream   41.3
+## 87       Delo     Dream   36.3
+## 88       Delo     Dream   36.9
+## 89       Delo     Dream   38.3
+## 90       Delo     Dream   38.9
+## 91       Delo     Dream   35.7
+## 92       Delo     Dream   41.1
+## 93       Delo     Dream   34.0
+## 94       Delo     Dream   39.6
+## 95       Delo     Dream   36.2
+## 96       Delo     Dream   40.8
+## 97       Delo     Dream   38.1
+## 98       Delo     Dream   40.3
+## 99       Delo     Dream   33.1
+## 100      Delo     Dream   43.2
+## 101      Delo    Biscoe   35.0
+## 102      Delo    Biscoe   41.0
+## 103      Delo    Biscoe   37.7
+## 104      Delo    Biscoe   37.8
+## 105      Delo    Biscoe   37.9
+## 106      Delo    Biscoe   39.7
+## 107      Delo    Biscoe   38.6
+## 108      Delo    Biscoe   38.2
+## 109      Delo    Biscoe   38.1
+## 110      Delo    Biscoe   43.2
+## 111      Delo    Biscoe   38.1
+## 112      Delo    Biscoe   45.6
+## 113      Delo    Biscoe   39.7
+## 114      Delo    Biscoe   42.2
+## 115      Delo    Biscoe   39.6
+## 116      Delo    Biscoe   42.7
+## 117      Delo Torgersen   38.6
+## 118      Delo Torgersen   37.3
+## 119      Delo Torgersen   35.7
+## 120      Delo Torgersen   41.1
+## 121      Delo Torgersen   36.2
+## 122      Delo Torgersen   37.7
+## 123      Delo Torgersen   40.2
+## 124      Delo Torgersen   41.4
+## 125      Delo Torgersen   35.2
+## 126      Delo Torgersen   40.6
+## 127      Delo Torgersen   38.8
+## 128      Delo Torgersen   41.5
+## 129      Delo Torgersen   39.0
+## 130      Delo Torgersen   44.1
+## 131      Delo Torgersen   38.5
+## 132      Delo Torgersen   43.1
+## 133      Delo     Dream   36.8
+## 134      Delo     Dream   37.5
+## 135      Delo     Dream   38.1
+## 136      Delo     Dream   41.1
+## 137      Delo     Dream   35.6
+## 138      Delo     Dream   40.2
+## 139      Delo     Dream   37.0
+## 140      Delo     Dream   39.7
+## 141      Delo     Dream   40.2
+## 142      Delo     Dream   40.6
+## 143      Delo     Dream   32.1
+## 144      Delo     Dream   40.7
+## 145      Delo     Dream   37.3
+## 146      Delo     Dream   39.0
+## 147      Delo     Dream   39.2
+## 148      Delo     Dream   36.6
+## 149      Delo     Dream   36.0
+## 150      Delo     Dream   37.8
+## 151      Delo     Dream   36.0
+## 152      Delo     Dream   41.5
+## 153    Gentoo    Biscoe   46.1
+## 154    Gentoo    Biscoe   50.0
+## 155    Gentoo    Biscoe   48.7
+## 156    Gentoo    Biscoe   50.0
+## 157    Gentoo    Biscoe   47.6
+## 158    Gentoo    Biscoe   46.5
+## 159    Gentoo    Biscoe   45.4
+## 160    Gentoo    Biscoe   46.7
+## 161    Gentoo    Biscoe   43.3
+## 162    Gentoo    Biscoe   46.8
+## 163    Gentoo    Biscoe   40.9
+## 164    Gentoo    Biscoe   49.0
+## 165    Gentoo    Biscoe   45.5
+## 166    Gentoo    Biscoe   48.4
+## 167    Gentoo    Biscoe   45.8
+## 168    Gentoo    Biscoe   49.3
+## 169    Gentoo    Biscoe   42.0
+## 170    Gentoo    Biscoe   49.2
+## 171    Gentoo    Biscoe   46.2
+## 172    Gentoo    Biscoe   48.7
+## 173    Gentoo    Biscoe   50.2
+## 174    Gentoo    Biscoe   45.1
+## 175    Gentoo    Biscoe   46.5
+## 176    Gentoo    Biscoe   46.3
+## 177    Gentoo    Biscoe   42.9
+## 178    Gentoo    Biscoe   46.1
+## 179    Gentoo    Biscoe   44.5
+## 180    Gentoo    Biscoe   47.8
+## 181    Gentoo    Biscoe   48.2
+## 182    Gentoo    Biscoe   50.0
+## 183    Gentoo    Biscoe   47.3
+## 184    Gentoo    Biscoe   42.8
+## 185    Gentoo    Biscoe   45.1
+## 186    Gentoo    Biscoe   59.6
+## 187    Gentoo    Biscoe   49.1
+## 188    Gentoo    Biscoe   48.4
+## 189    Gentoo    Biscoe   42.6
+## 190    Gentoo    Biscoe   44.4
+## 191    Gentoo    Biscoe   44.0
+## 192    Gentoo    Biscoe   48.7
+## 193    Gentoo    Biscoe   42.7
+## 194    Gentoo    Biscoe   49.6
+## 195    Gentoo    Biscoe   45.3
+## 196    Gentoo    Biscoe   49.6
+## 197    Gentoo    Biscoe   50.5
+## 198    Gentoo    Biscoe   43.6
+## 199    Gentoo    Biscoe   45.5
+## 200    Gentoo    Biscoe   50.5
+## 201    Gentoo    Biscoe   44.9
+## 202    Gentoo    Biscoe   45.2
+## 203    Gentoo    Biscoe   46.6
+## 204    Gentoo    Biscoe   48.5
+## 205    Gentoo    Biscoe   45.1
+## 206    Gentoo    Biscoe   50.1
+## 207    Gentoo    Biscoe   46.5
+## 208    Gentoo    Biscoe   45.0
+## 209    Gentoo    Biscoe   43.8
+## 210    Gentoo    Biscoe   45.5
+## 211    Gentoo    Biscoe   43.2
+## 212    Gentoo    Biscoe   50.4
+## 213    Gentoo    Biscoe   45.3
+## 214    Gentoo    Biscoe   46.2
+## 215    Gentoo    Biscoe   45.7
+## 216    Gentoo    Biscoe   54.3
+## 217    Gentoo    Biscoe   45.8
+## 218    Gentoo    Biscoe   49.8
+## 219    Gentoo    Biscoe   46.2
+## 220    Gentoo    Biscoe   49.5
+## 221    Gentoo    Biscoe   43.5
+## 222    Gentoo    Biscoe   50.7
+## 223    Gentoo    Biscoe   47.7
+## 224    Gentoo    Biscoe   46.4
+## 225    Gentoo    Biscoe   48.2
+## 226    Gentoo    Biscoe   46.5
+## 227    Gentoo    Biscoe   46.4
+## 228    Gentoo    Biscoe   48.6
+## 229    Gentoo    Biscoe   47.5
+## 230    Gentoo    Biscoe   51.1
+## 231    Gentoo    Biscoe   45.2
+## 232    Gentoo    Biscoe   45.2
+## 233    Gentoo    Biscoe   49.1
+## 234    Gentoo    Biscoe   52.5
+## 235    Gentoo    Biscoe   47.4
+## 236    Gentoo    Biscoe   50.0
+## 237    Gentoo    Biscoe   44.9
+## 238    Gentoo    Biscoe   50.8
+## 239    Gentoo    Biscoe   43.4
+## 240    Gentoo    Biscoe   51.3
+## 241    Gentoo    Biscoe   47.5
+## 242    Gentoo    Biscoe   52.1
+## 243    Gentoo    Biscoe   47.5
+## 244    Gentoo    Biscoe   52.2
+## 245    Gentoo    Biscoe   45.5
+## 246    Gentoo    Biscoe   49.5
+## 247    Gentoo    Biscoe   44.5
+## 248    Gentoo    Biscoe   50.8
+## 249    Gentoo    Biscoe   49.4
+## 250    Gentoo    Biscoe   46.9
+## 251    Gentoo    Biscoe   48.4
+## 252    Gentoo    Biscoe   51.1
+## 253    Gentoo    Biscoe   48.5
+## 254    Gentoo    Biscoe   55.9
+## 255    Gentoo    Biscoe   47.2
+## 256    Gentoo    Biscoe   49.1
+## 257    Gentoo    Biscoe   47.3
+## 258    Gentoo    Biscoe   46.8
+## 259    Gentoo    Biscoe   41.7
+## 260    Gentoo    Biscoe   53.4
+## 261    Gentoo    Biscoe   43.3
+## 262    Gentoo    Biscoe   48.1
+## 263    Gentoo    Biscoe   50.5
+## 264    Gentoo    Biscoe   49.8
+## 265    Gentoo    Biscoe   43.5
+## 266    Gentoo    Biscoe   51.5
+## 267    Gentoo    Biscoe   46.2
+## 268    Gentoo    Biscoe   55.1
+## 269    Gentoo    Biscoe   44.5
+## 270    Gentoo    Biscoe   48.8
+## 271    Gentoo    Biscoe   47.2
+## 272    Gentoo    Biscoe     NA
+## 273    Gentoo    Biscoe   46.8
+## 274    Gentoo    Biscoe   50.4
+## 275    Gentoo    Biscoe   45.2
+## 276    Gentoo    Biscoe   49.9
+## 277 Chinstrap     Dream   46.5
+## 278 Chinstrap     Dream   50.0
+## 279 Chinstrap     Dream   51.3
+## 280 Chinstrap     Dream   45.4
+## 281 Chinstrap     Dream   52.7
+## 282 Chinstrap     Dream   45.2
+## 283 Chinstrap     Dream   46.1
+## 284 Chinstrap     Dream   51.3
+## 285 Chinstrap     Dream   46.0
+## 286 Chinstrap     Dream   51.3
+## 287 Chinstrap     Dream   46.6
+## 288 Chinstrap     Dream   51.7
+## 289 Chinstrap     Dream   47.0
+## 290 Chinstrap     Dream   52.0
+## 291 Chinstrap     Dream   45.9
+## 292 Chinstrap     Dream   50.5
+## 293 Chinstrap     Dream   50.3
+## 294 Chinstrap     Dream   58.0
+## 295 Chinstrap     Dream   46.4
+## 296 Chinstrap     Dream   49.2
+## 297 Chinstrap     Dream   42.4
+## 298 Chinstrap     Dream   48.5
+## 299 Chinstrap     Dream   43.2
+## 300 Chinstrap     Dream   50.6
+## 301 Chinstrap     Dream   46.7
+## 302 Chinstrap     Dream   52.0
+## 303 Chinstrap     Dream   50.5
+## 304 Chinstrap     Dream   49.5
+## 305 Chinstrap     Dream   46.4
+## 306 Chinstrap     Dream   52.8
+## 307 Chinstrap     Dream   40.9
+## 308 Chinstrap     Dream   54.2
+## 309 Chinstrap     Dream   42.5
+## 310 Chinstrap     Dream   51.0
+## 311 Chinstrap     Dream   49.7
+## 312 Chinstrap     Dream   47.5
+## 313 Chinstrap     Dream   47.6
+## 314 Chinstrap     Dream   52.0
+## 315 Chinstrap     Dream   46.9
+## 316 Chinstrap     Dream   53.5
+## 317 Chinstrap     Dream   49.0
+## 318 Chinstrap     Dream   46.2
+## 319 Chinstrap     Dream   50.9
+## 320 Chinstrap     Dream   45.5
+## 321 Chinstrap     Dream   50.9
+## 322 Chinstrap     Dream   50.8
+## 323 Chinstrap     Dream   50.1
+## 324 Chinstrap     Dream   49.0
+## 325 Chinstrap     Dream   51.5
+## 326 Chinstrap     Dream   49.8
+## 327 Chinstrap     Dream   48.1
+## 328 Chinstrap     Dream   51.4
+## 329 Chinstrap     Dream   45.7
+## 330 Chinstrap     Dream   50.7
+## 331 Chinstrap     Dream   42.5
+## 332 Chinstrap     Dream   52.2
+## 333 Chinstrap     Dream   45.2
+## 334 Chinstrap     Dream   49.3
+## 335 Chinstrap     Dream   50.2
+## 336 Chinstrap     Dream   45.6
+## 337 Chinstrap     Dream   51.9
+## 338 Chinstrap     Dream   46.8
+## 339 Chinstrap     Dream   45.7
+## 340 Chinstrap     Dream   55.8
+## 341 Chinstrap     Dream   43.5
+## 342 Chinstrap     Dream   49.6
+## 343 Chinstrap     Dream   50.8
+## 344 Chinstrap     Dream   50.2
+```
+---
+## Manipulations de plusieurs facteurs 
+- changement de niveaux sur tous les facteurs
+
+
+```
+## Warning: There were 3 warnings in `mutate()`.
+## The first warning was:
+## ℹ In argument: `species = (function (.f, ...) ...`.
+## Caused by warning:
+## ! Unknown levels in `f`: Dream
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 2 remaining warnings.
+```
+- petite vérification
+
+```
+## 'data.frame':	344 obs. of  3 variables:
+##  $ species: Factor w/ 3 levels "Delo","Chinstrap",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ island : Factor w/ 3 levels "Biscoe","Delo",..: 3 3 3 3 3 3 3 3 3 3 ...
+##  $ sex    : Factor w/ 2 levels "female","male": 2 1 1 NA 1 2 1 2 NA NA ...
+```
+
+---
+## Transformations des données : un exemple
+
+.pull-left[
+- on parle de pivot de données quand on cherche à changer la nature des individus statistiques, prenons un exemple où l'individu est ici un pays
+
+```
+## # A tibble: 2 × 3
+##   pays      pop1992  pop1997
+##   &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;
+## 1 Belgique 10045622 10199787
+## 2 France   57374179 58623428
+```
+]
+.pull-right[
+- on cherche alors à créer un tableau où l'individu est un recensement, et le pays une variable
+
+```
+## # A tibble: 4 × 3
+##   pays     année population
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt;
+## 1 Belgique 1992    10045622
+## 2 Belgique 1997    10199787
+## 3 France   1992    57374179
+## 4 France   1997    58623428
+```
+]
+
+---
+## Transformations des données : un exemple
+.pull-left[
+
+```
+## # A tibble: 4 × 3
+##   pays     année population
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt;
+## 1 Belgique 1992    10045622
+## 2 Belgique 1997    10199787
+## 3 France   1992    57374179
+## 4 France   1997    58623428
+```
+
+]
+.pull-right[
+
+```
+## # A tibble: 2 × 3
+##   pays      pop1992  pop1997
+##   &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;
+## 1 Belgique 10045622 10199787
+## 2 France   57374179 58623428
+```
+]
+---
+## Jointures
+
+.pull-left[
+
+```
+## # A tibble: 3 × 2
+##       x z    
+##   &lt;int&gt; &lt;chr&gt;
+## 1     1 a    
+## 2     2 b    
+## 3     3 c
+```
+
+```
+## # A tibble: 3 × 2
+##       x y     
+##   &lt;dbl&gt; &lt;chr&gt; 
+## 1     1 first 
+## 2     1 second
+## 3     2 third
+```
+]
+.pull-left[
+
+```
+## Joining with `by = join_by(x)`
+```
+
+```
+## # A tibble: 4 × 3
+##       x z     y     
+##   &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt; 
+## 1     1 a     first 
+## 2     1 a     second
+## 3     2 b     third 
+## 4     3 c     &lt;NA&gt;
+```
+
+```
+## Joining with `by = join_by(x)`
+```
+
+```
+## # A tibble: 3 × 3
+##       x y      z    
+##   &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;
+## 1     1 first  a    
+## 2     1 second a    
+## 3     2 third  b
+```
+]
+
+---
+## Manipulations des chaînes de caractères : un exemple
+- concaténation et séparations simples
+
+```
+##                new bill_l bill_d flip_l mass    sex year
+## 1 Torgersen_Adelie   39.1   18.7    181 3750   male 2007
+## 2 Torgersen_Adelie   39.5   17.4    186 3800 female 2007
+## 3 Torgersen_Adelie   40.3   18.0    195 3250 female 2007
+```
+
+```
+##         ile espece bill_l bill_d flip_l mass    sex year
+## 1 Torgersen Adelie   39.1   18.7    181 3750   male 2007
+## 2 Torgersen Adelie   39.5   17.4    186 3800 female 2007
+## 3 Torgersen Adelie   40.3   18.0    195 3250 female 2007
+```
+
+---
+## Manipulations des dates  : un exemple
+- transcription facile
+
+
+```
+## [1] "2010-12-15"
+```
+
+```
+## [1] "2010-12-15"
+```
+
+```
+## [1] "2017-04-01"
+```
+
+```
+## [1] "2017-04-01"
+```
+
+```
+## [1] "2017-04-01"
+```
+
+---
+
+
+class: inverse, middle, center
+# Graphiques statiques avec ggplot2
+
+---
+
+## Structure générale
+
+- l'intérêt majeur : 
+  + automatisation naturelle de beaucoup de représentations et garantie de maintenir une charte graphique avec un rendu déjà abouti sans trop d'efforts
+- les inconvénients : 
+  + environnements en évolution constante, un nombre énorme de fonctions pour différentes situations
+- le fonctionnement :
+  + tous les graphiques débutent par l'appel de la fonction `ggplot()`
+  + ensuite, empilement de couches/calques/écailles, ce n'est pas le *pipe* que sert mais le signe `+`
+   
+
+---
+
+## les graphiques de base
+- un peu moins de facilité qu'avec `plot` qui opte pour la représentation en fonction des natures des variables
+- les fonctions de base 
+  + `geom_point` pour un nuage de points
+  + `geom_line` pour une interpolation linéaire de points
+  + `geom_bar` pour un diagramme en bâton
+  + `geom_boxplot` pour une boîte à moustaches
+  + `geom_hist` pour un histogramme
+- la syntaxe commune fait intervenir un argument `aes()` que l'on peut partager entre plusieurs couches
+  + l'argument `x=` permet de désigner la variable en abscisse
+  + l'argument `y=` permet de désigner la variable en ordonnée
+  + l'argument `group=` permet de désigner la variable qualitative pour séparer les valeurs suivant les modalités
+  + l'argument `color=` permet de désigner la variable utilisée pour la couleur du tracé
+  + l'argument `fill=` permet de désigner la variable utilisée pour le remplissage des formes
+  
+---
+
+## Diagramme en bâtons
+
+- la structure lisible mais légèrement plus lourde qu'avec `plot()`
+.pull-left[
+
+]
+.pull-left[
+![](IntroR_files/figure-html/unnamed-chunk-39-1.png)&lt;!-- --&gt;
+]
+---
+
+## Ajout d'une variable
+
+- pour enrichir la représentation, il peut être intéressant de croiser les variables
+.pull-left[
+
+]
+.pull-right[
+![](IntroR_files/figure-html/unnamed-chunk-41-1.png)&lt;!-- --&gt;
+]
+
+---
+
+## Maîtriser l'intégration de la nouvelle variable
+.pull-left[
+- plusieurs variantes possibles
+
+]
+.pull-right[
+![](IntroR_files/figure-html/unnamed-chunk-43-1.png)&lt;!-- --&gt;
+]
+---
+## Cosmétiques : 1e couche
+
+.pull-left[
+- afin de rendre le graphique plus lisible
+
+]
+.pull-right[
+![](IntroR_files/figure-html/unnamed-chunk-45-1.png)&lt;!-- --&gt;
+]
+---
+
+## L'histogramme
+
+
+.pull-left[
+- là encore il faut savoir si on veut un histogramme complet puis donner une répartition au sein d'une classe ou alors autant d'histogrammes que de modalités
+
+]
+.pull-right[
+![](IntroR_files/figure-html/unnamed-chunk-47-1.png)&lt;!-- --&gt;
+]
+---
+## La boîte à moustache
+
+.pull-left[
+- comme pour les diagrammes en bâtons
+
+
+]
+.pull-right[
+
+```
+## Warning: Removed 2 rows containing non-finite outside the scale range
+## (`stat_boxplot()`).
+```
+
+![](IntroR_files/figure-html/unnamed-chunk-49-1.png)&lt;!-- --&gt;
+]
+
+---
+## Le nuage de points
+
+- la fonction `geom_smooth()` permet d'ajouter les droites de régression par groupe ainsi que les intervalles de confiance sur la tendance
+.pull-left[
+
+]
+.pull-right[
+
+```
+## `geom_smooth()` using formula = 'y ~ x'
+```
+
+```
+## Warning: Removed 2 rows containing non-finite outside the scale range
+## (`stat_smooth()`).
+```
+
+```
+## Warning: Removed 2 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](IntroR_files/figure-html/unnamed-chunk-51-1.png)&lt;!-- --&gt;
+]
+
+---
+## Cosmétiques : 2e couche
+
+.pull-left[
+- changement de couleurs à l'aide des fonctions du type commençant par `scale_`
+
+]
+.pull-right[
+
+```
+## `geom_smooth()` using formula = 'y ~ x'
+```
+
+```
+## Warning: Removed 2 rows containing non-finite outside the scale range
+## (`stat_smooth()`).
+```
+
+```
+## Warning: Removed 2 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](IntroR_files/figure-html/unnamed-chunk-53-1.png)&lt;!-- --&gt;
+]
+
+---
+## Arrière-plan 
+- jeu possible avec plein de thèmes déjà enregistrés, fonctions commençant par : `theme_`
+.pull-left[
+
+]
+.pull-right[
+
+```
+## `geom_smooth()` using formula = 'y ~ x'
+```
+
+```
+## Warning: Removed 2 rows containing non-finite outside the scale range
+## (`stat_smooth()`).
+```
+
+```
+## Warning: Removed 2 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+![](IntroR_files/figure-html/unnamed-chunk-55-1.png)&lt;!-- --&gt;
+
+```
+## [1] 136
+```
+]
+
+---
+## Graphique d'interaction
+
+- illustration d'un effet d'interaction dans un modèle linéaire
+
+```
+## `summarise()` has grouped output by 'sex'. You can override using the `.groups`
+## argument.
+```
+
+![](IntroR_files/figure-html/unnamed-chunk-56-1.png)&lt;!-- --&gt;
+---
+## Mise en lumière
+- suivant la qualité de l'interlocuteur, il peut être important de guider son oeil sur les parties du graphique sur lesquelles vous concentrez votre analyse
+.pull-left[
+
+]
+
+.pull-right[
+![](IntroR_files/figure-html/unnamed-chunk-58-1.png)&lt;!-- --&gt;
+  
+]
+---
+## La magie des facettes
+
+.pull-left[
+- possibilité de créer une mosaïque
+
+]
+.pull-right[
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](IntroR_files/figure-html/unnamed-chunk-60-1.png)&lt;!-- --&gt;
+]
+---
+
+## Disposer plusieurs sorties
+
+- il existe plusieurs façons de diposer plusieurs graphiques suivant le rendu recherché, encore une fois on ne cherche pas ici à être exhaustif
+.pull-left[
+- deux solutions présentées ici, une première plutôt directe, avec le paquet `patchwork` 
+
+]
+.pull-right[
+
+```
+## Warning: Removed 2 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+```
+## Warning: Removed 2 rows containing non-finite outside the scale range
+## (`stat_bin()`).
+```
+
+```
+## Warning: Removed 2 rows containing non-finite outside the scale range
+## (`stat_boxplot()`).
+```
+
+![](IntroR_files/figure-html/unnamed-chunk-62-1.png)&lt;!-- --&gt;
+]
+
+---
+
+## Disposer plusieurs sorties, une deuxième solution possible
+
+.pull-left[
+- la seconde solution,  un peu plus complète mais plus lourde avec la fonction  `ggpubr::ggarrange()`
+
+]
+.pull-right[
+
+```
+## 
+## Attachement du package : 'ggpubr'
+```
+
+```
+## L'objet suivant est masqué depuis 'package:forecast':
+## 
+##     gghistogram
+```
+
+```
+## Warning: Removed 2 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+## Removed 2 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+```
+
+```
+## Warning: Removed 2 rows containing non-finite outside the scale range
+## (`stat_boxplot()`).
+```
+
+```
+## Warning: Removed 2 rows containing non-finite outside the scale range
+## (`stat_bin()`).
+```
+
+![](IntroR_files/figure-html/unnamed-chunk-64-1.png)&lt;!-- --&gt;
+]
+
+---
+## Ensuite ?
+
+- énorme communauté autour de `tidyverse` et `ggplot`
+- chaque question qu'on se pose a très certainement une réponse simple, concise (ou presque) et reproductible
+- quelques sources 
+  + &lt;a href="http://www.sthda.com/english/"&gt;Statistical tools for high-throughput data analysis&lt;/a&gt;
+  + &lt;a href="https://stackoverflow.com/"&gt; Stackoverflow&lt;/a&gt;
+  + &lt;a href="https://exts.ggplot2.tidyverse.org/gallery/"&gt; présentation de multiples librairies d'extensions ggplot &lt;/a&gt;
+- facilités également fournies par les intelligences artificielles, plus la question est précise mieux c'est !
+
+---
+class: inverse, middle, center
+# Graphiques interactifs plotly
+
+---
+
+## Des graphiques pour des rapports html
+
+- le package `plotly` est porté sur plusieurs logiciels dont `R` et `Python`
+- le fonctionnement - à la syntaxe près évidemment - est proche de celui de `ggplot2`
+- à partir des sorties, il est possible d'enregistrer des images figées
+- le passage de la souris sur le graphique permet de faire apparaître les informations utilisées pour le graphique, on peut zoomer sur certaines parties et sauver le zoom
+- possibilité de réaliser des animations
+- source assez complète : &lt;a href="plotly.com/r/"&gt;plotly.com&lt;/a&gt;
+
+---
+## Les graphiques de base
+.pull-left[
+- les fonctions changent et l'empilement se fait avec le pipe `%&gt;%`
+
+
+]
+.pull-right[
+
+```
+## Warning: Ignoring 2 observations
+```
+
+&lt;div align="center"&gt;
+&lt;iframe src="scatter.html" width="1000" height="800" scrolling="yes" seamless="seamless" frameBorder="0"&gt; &lt;/iframe&gt;
+&lt;/div&gt;
+]
+---
+## Les avantages de l'interactivité
+
+- ce type de représentation peut vraiment être utile en phase exploratoire, prenons l'exemple des données de covid
+
+
+&lt;iframe src="covid.html" width="1000" height="800" scrolling="yes" seamless="seamless" frameBorder="0"&gt; &lt;/iframe&gt;
+
+- code correspondant
+
+```r
+covid &lt;- read.table(
+  "owid-covid-data.csv",
+  header = T,
+  sep = ",",
+  stringsAsFactors = TRUE
+) %&gt;%
+  mutate(date = ymd(date)) %&gt;%
+  filter(
+    location %in% c(
+      "France",
+      "United States",
+      "Mexico",
+      "Portugal",
+      "Spain",
+      "United Kingdom",
+      "Brazil",
+      "South Africa"
+    ),
+    (ymd(20201101) &lt;= date) &amp; (ymd(20210201) &gt;= date)
+  ) %&gt;%
+  droplevels()
+covid %&gt;% plot_ly(type = "scatter", mode = "lines") %&gt;%
+  add_trace(
+    x = ~ date,
+    y =  ~ new_cases,
+    color = ~ location,
+    fill = "tozeroy"
+  ) %&gt;%
+  layout(
+    title = 'COVID-19',
+    xaxis = list(title = 'Date'),
+    yaxis = list(title = 'Number of new cases'),
+    legend = list(title = list(text = '&lt;b&gt; Countries &lt;/b&gt;')),
+    annotations = list(
+      x = 1,
+      y = -.1,
+      text = "Source: https://ourworldindata.org/",
+      showarrow = F,
+      xref = 'paper',
+      yref = 'paper',
+      xanchor = 'right',
+      yanchor = 'auto',
+      xshift = 0,
+      yshift = 0,
+      font = list(size = 7)
+    )
+  )
+```
+
+---
+
+## De ggplot à plotly
+- une fonction permet de transcrire un objet créé par `ggplot()` en un objet pouvant sortir de `plot_ly()`
+
+
+
+
+
+```
+## `geom_smooth()` using formula = 'y ~ x'
+```
+
+```
+## Warning: Removed 2 rows containing non-finite outside the scale range
+## (`stat_smooth()`).
+```
+
+&lt;iframe src="ggplotly.html" width="1100" height="800" scrolling="yes" seamless="seamless" frameBorder="0"&gt; &lt;/iframe&gt;
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
